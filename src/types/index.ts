@@ -36,7 +36,7 @@ export interface Video {
     is_active: boolean;
 }
 
-export type PaymentMethod = 'pix' | 'credit_card';
+export type PaymentMethod = 'pix';
 export type OrderStatus = 'pending' | 'paid' | 'canceled' | 'failed';
 
 export type ProductionStatus = 'pending_form' | 'in_production' | 'delivered';

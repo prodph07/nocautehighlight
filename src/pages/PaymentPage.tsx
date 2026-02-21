@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ShieldCheck, CreditCard, QrCode, Loader2, Lock } from 'lucide-react';
+import { ShieldCheck, QrCode, Loader2, Lock } from 'lucide-react';
 import { Navbar } from '../components/layout/Navbar';
 import { type PaymentMethod } from '../types';
 import { VideoService } from '../services/video.service';
@@ -16,7 +16,7 @@ export function PaymentPage() {
     const [event, setEvent] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState<any>('pix');
+    const paymentMethod = 'pix';
     const [user, setUser] = useState<any>(null);
 
     const [qrCode, setQrCode] = useState<any>(null);
@@ -326,39 +326,18 @@ export function PaymentPage() {
 
                         <div className="space-y-4 mb-8">
                             <div
-                                onClick={() => setPaymentMethod('pix')}
-                                className={`p-4 rounded-xl border-2 cursor-pointer flex items-center gap-4 transition-all ${paymentMethod === 'pix' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}
+                                className="p-4 rounded-xl border-2 border-blue-500 bg-blue-50 flex items-center gap-4 transition-all"
                             >
-                                <QrCode className={`w-6 h-6 ${paymentMethod === 'pix' ? 'text-blue-600' : 'text-gray-400'}`} />
+                                <QrCode className="w-6 h-6 text-blue-600" />
                                 <div className="flex-grow">
-                                    <span className={`block font-bold ${paymentMethod === 'pix' ? 'text-blue-900' : 'text-gray-700'}`}>Pix (Instantâneo)</span>
+                                    <span className="block font-bold text-blue-900">Pix (Instantâneo)</span>
                                     <span className="text-xs text-gray-500">Aprovação imediata</span>
                                 </div>
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'pix' ? 'border-blue-600' : 'border-gray-300'}`}>
-                                    {paymentMethod === 'pix' && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
-                                </div>
-                            </div>
-
-                            <div
-                                onClick={() => setPaymentMethod('credit_card')}
-                                className={`p-4 rounded-xl border-2 cursor-pointer flex items-center gap-4 transition-all ${paymentMethod === 'credit_card' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}
-                            >
-                                <CreditCard className={`w-6 h-6 ${paymentMethod === 'credit_card' ? 'text-blue-600' : 'text-gray-400'}`} />
-                                <div className="flex-grow">
-                                    <span className={`block font-bold ${paymentMethod === 'credit_card' ? 'text-blue-900' : 'text-gray-700'}`}>Cartão de Crédito</span>
-                                    <span className="text-xs text-gray-500">Até 12x no cartão</span>
-                                </div>
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'credit_card' ? 'border-blue-600' : 'border-gray-300'}`}>
-                                    {paymentMethod === 'credit_card' && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
+                                <div className="w-5 h-5 rounded-full border-2 border-blue-600 flex items-center justify-center">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
                                 </div>
                             </div>
                         </div>
-
-                        {paymentMethod === 'credit_card' && (
-                            <div className="mb-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-500 border border-gray-200">
-                                ℹ️ Simulação: O pagamento será aprovado automaticamente.
-                            </div>
-                        )}
 
                         <button
                             onClick={handleCheckout}
