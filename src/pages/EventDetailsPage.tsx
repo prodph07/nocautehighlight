@@ -57,6 +57,7 @@ export function EventDetailsPage() {
                 <img
                     src={event.banner_url || 'https://via.placeholder.com/1920x600?text=Evento+Sem+Banner'}
                     alt={event.title}
+                    loading="lazy"
                     className="w-full h-full object-cover opacity-60"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
@@ -67,11 +68,13 @@ export function EventDetailsPage() {
                             <ArrowLeft className="w-5 h-5 mr-2" />
                             Voltar
                         </Link>
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{event.title}</h1>
-                        <div className="flex flex-wrap gap-6 text-white/90">
-                            <div className="flex items-center">
-                                <Calendar className="w-5 h-5 mr-2 text-blue-400" />
-                                <span className="text-lg">{new Date(event.fight_date).toLocaleDateString()}</span>
+                        <h1 className="text-4xl font-bold font-display uppercase tracking-wider mb-4 leading-tight">
+                            {event.title}
+                        </h1>
+                        <div className="flex flex-wrap items-center gap-6 text-gray-200">
+                            <div className="flex items-center gap-2">
+                                <Calendar className="w-5 h-5 text-red-500" />
+                                <span className="text-lg">{new Date(event.fight_date + 'T12:00:00').toLocaleDateString()}</span>
                             </div>
                             {event.location && (
                                 <div className="flex items-center">

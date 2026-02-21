@@ -81,6 +81,7 @@ export function VideoDetailsPage() {
                     <img
                         src={video.teaser_url}
                         alt={video.title}
+                        loading="lazy"
                         className="w-full h-full object-cover opacity-60"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
@@ -102,7 +103,7 @@ export function VideoDetailsPage() {
                     <div className="flex flex-wrap items-center gap-6 text-gray-300">
                         <div className="flex items-center">
                             <Calendar className="w-5 h-5 mr-2" />
-                            <span>{new Date(video.fight_date).toLocaleDateString()}</span>
+                            <span>{new Date(video.fight_date + 'T12:00:00').toLocaleDateString()}</span>
                         </div>
                         <div className="flex items-center">
                             <ShieldCheck className="w-5 h-5 mr-2" />
@@ -151,7 +152,7 @@ export function VideoDetailsPage() {
                                 onClick={handleBuyClick}
                                 className="w-full py-4 bg-green-600 text-white rounded-xl font-bold text-lg hover:bg-green-700 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                             >
-                                Quero Assistir Agora
+                                Quero Comprar Agora
                             </button>
 
                             <div className="mt-6 flex items-start gap-3 p-4 bg-blue-50 rounded-lg border border-blue-100">

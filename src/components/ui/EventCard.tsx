@@ -14,6 +14,7 @@ export function EventCard({ event, onBuy }: EventCardProps) {
                 <img
                     src={event.thumbnailUrl}
                     alt={event.title}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -27,7 +28,7 @@ export function EventCard({ event, onBuy }: EventCardProps) {
                 <div className="space-y-2 mb-4">
                     <div className="flex items-center text-gray-600 text-sm">
                         <Calendar className="w-4 h-4 mr-2" />
-                        <span>{new Date(event.fight_date).toLocaleDateString()}</span>
+                        <span>{new Date(event.fight_date + 'T12:00:00').toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center text-gray-600 text-sm">
                         <MapPin className="w-4 h-4 mr-2" />
@@ -43,7 +44,7 @@ export function EventCard({ event, onBuy }: EventCardProps) {
                         onClick={() => onBuy(event)}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                     >
-                        Assistir Agora
+                        Comprar Agora
                     </button>
                 </div>
             </div>

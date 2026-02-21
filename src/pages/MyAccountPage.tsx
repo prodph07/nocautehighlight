@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Package, ExternalLink, Edit3, CheckCircle, Clock } from 'lucide-react';
+import { LogOut, Package, ExternalLink, Edit3, CheckCircle, Clock, Settings, Save, Loader2 } from 'lucide-react';
 import { Navbar } from '../components/layout/Navbar';
 import { VideoService } from '../services/video.service';
 import { supabase } from '../lib/supabase';
@@ -22,6 +22,18 @@ export function MyAccountPage() {
     const [isPixModalOpen, setIsPixModalOpen] = useState(false);
     const [selectedPixOrder, setSelectedPixOrder] = useState<Order | null>(null);
 
+    // Tab State
+    const [activeTab, setActiveTab] = useState<'orders' | 'settings'>('orders');
+
+    const [profile, setProfile] = useState({
+        full_name: '',
+        whatsapp: '',
+        cpf: ''
+    });
+    const [savingProfile, setSavingProfile] = useState(false);
+    const [email, setEmail] = useState('');
+    const [savingEmail, setSavingEmail] = useState(false);
+
     useEffect(() => {
         checkAuth();
     }, []);
@@ -38,9 +50,84 @@ export function MyAccountPage() {
 
     const loadData = async (userId: string) => {
         setLoading(true);
-        const ordersData = await VideoService.getMyOrders(userId);
-        setMyOrders(ordersData);
+        try {
+            const [ordersData, profileRes] = await Promise.all([
+                VideoService.getMyOrders(userId),
+                supabase.from('profiles').select('*').eq('id', userId).single()
+            ]);
+
+            setMyOrders(ordersData);
+
+            if (profileRes.data) {
+                setProfile({
+                    full_name: profileRes.data.full_name || '',
+                    whatsapp: profileRes.data.whatsapp || '',
+                    cpf: profileRes.data.cpf || ''
+                });
+                setEmail(user.email || ''); // get email from user object
+            }
+        } catch (error) {
+            console.error("Error loading account data:", error);
+        }
         setLoading(false);
+    };
+
+    const handleSaveProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) return;
+        setSavingProfile(true);
+
+        try {
+            const { error } = await supabase.from('profiles').update({
+                full_name: profile.full_name,
+                whatsapp: profile.whatsapp,
+                cpf: profile.cpf
+            }).eq('id', user.id);
+
+            if (error) throw error;
+
+            // Also update auth metadata to keep it consistent
+            await supabase.auth.updateUser({
+                data: {
+                    full_name: profile.full_name,
+                    whatsapp: profile.whatsapp,
+                    cpf: profile.cpf
+                }
+            });
+
+            alert('Perfil atualizado com sucesso!');
+        } catch (error: any) {
+            console.error('Error saving profile:', error);
+            alert('Erro ao salvar perfil: ' + error.message);
+        } finally {
+            setSavingProfile(false);
+        }
+    };
+
+    const handleSaveEmail = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) return;
+        setSavingEmail(true);
+
+        try {
+            const { error: authError } = await supabase.auth.updateUser({
+                email: email
+            });
+
+            if (authError) {
+                if (authError.message.includes('already registered')) {
+                    throw new Error('Este email já está sendo usado por outra conta.');
+                }
+                throw authError;
+            }
+
+            alert('Email de login atualizado com sucesso! (Verifique sua caixa de entrada no novo email para confirmar).');
+        } catch (error: any) {
+            console.error('Error saving email:', error);
+            alert('Erro ao salvar email: ' + error.message);
+        } finally {
+            setSavingEmail(false);
+        }
     };
 
     const handleOpenModal = (item: OrderItem) => {
@@ -122,169 +209,286 @@ export function MyAccountPage() {
                     </button>
                 </div>
 
-                <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                    <Edit3 className="w-6 h-6 mr-2 text-blue-600" />
-                    Minhas Edições e Highlights
-                </h2>
+                <div className="flex space-x-4 mb-8 border-b border-gray-200">
+                    <button
+                        onClick={() => setActiveTab('orders')}
+                        className={`pb-4 px-2 font-medium text-lg flex items-center transition-colors border-b-2 ${activeTab === 'orders' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <Package className="w-5 h-5 mr-2" />
+                        Meus Pedidos
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('settings')}
+                        className={`pb-4 px-2 font-medium text-lg flex items-center transition-colors border-b-2 ${activeTab === 'settings' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <Settings className="w-5 h-5 mr-2" />
+                        Configurações
+                    </button>
+                </div>
 
-                {paidOrderItems.length === 0 ? (
-                    <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm mb-12">
-                        <p className="text-gray-500 mb-4">Você ainda não possui pacotes de edição pagos.</p>
-                        <button
-                            onClick={() => navigate('/')}
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-                        >
-                            Ver Catálogo de Eventos
-                        </button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                        {paidOrderItems.map(item => (
-                            <div key={item.id} className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 flex flex-col">
-                                <div className="mb-4 flex-grow">
-                                    <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">
-                                        {item.videos?.title || 'Pacote de Highlight'}
-                                    </h3>
+                {activeTab === 'orders' ? (
+                    <>
+                        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                            <Edit3 className="w-6 h-6 mr-2 text-blue-600" />
+                            Minhas Edições e Highlights
+                        </h2>
 
-                                    {/* Status Badge */}
-                                    <div className="mt-3">
-                                        {(!item.production_status || item.production_status === 'pending_form') && (
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
-                                                Ação Necessária
-                                            </span>
-                                        )}
-                                        {item.production_status === 'in_production' && (
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                                <Clock className="w-3 h-3 mr-1" />
-                                                Em Produção
-                                            </span>
-                                        )}
-                                        {item.production_status === 'delivered' && (
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                                                <CheckCircle className="w-3 h-3 mr-1" />
-                                                Entregue
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t border-gray-100 mt-auto flex flex-col gap-2">
-                                    {(!item.production_status || item.production_status === 'pending_form') && (
-                                        <button
-                                            onClick={() => handleOpenModal(item)}
-                                            className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <Edit3 className="w-4 h-4" />
-                                            Preencher Dados da Luta
-                                        </button>
-                                    )}
-                                    {item.production_status === 'in_production' && (
-                                        <>
-                                            <div className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-lg font-medium text-center text-sm cursor-not-allowed">
-                                                Aguarde. Seu highlight está sendo editado!
-                                            </div>
-                                            <button
-                                                onClick={() => handleOpenModal(item)}
-                                                className="w-full py-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center justify-center gap-2 transition-colors"
-                                            >
-                                                <Edit3 className="w-4 h-4" />
-                                                Alterar Informações
-                                            </button>
-                                        </>
-                                    )}
-                                    {item.production_status === 'delivered' && (
-                                        <>
-                                            <button
-                                                onClick={() => handleWatchDelivered(item.delivered_video_url || '#')}
-                                                className="w-full py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <ExternalLink className="w-4 h-4" />
-                                                Acessar / Baixar Vídeo
-                                            </button>
-                                            <button
-                                                onClick={() => handleOpenModal(item)}
-                                                className="w-full py-2 text-sm text-gray-500 hover:text-blue-600 font-medium flex items-center justify-center gap-2 transition-colors"
-                                            >
-                                                <Edit3 className="w-4 h-4" />
-                                                Revisar Informações da Edição
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
+                        {paidOrderItems.length === 0 ? (
+                            <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm mb-12">
+                                <p className="text-gray-500 mb-4">Você ainda não possui pacotes de edição pagos.</p>
+                                <button
+                                    onClick={() => navigate('/')}
+                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+                                >
+                                    Ver Catálogo de Eventos
+                                </button>
                             </div>
-                        ))}
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                                {paidOrderItems.map(item => (
+                                    <div key={item.id} className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 flex flex-col">
+                                        <div className="mb-4 flex-grow">
+                                            <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">
+                                                {item.videos?.title || 'Pacote de Highlight'}
+                                            </h3>
+
+                                            {/* Status Badge */}
+                                            <div className="mt-3">
+                                                {(!item.production_status || item.production_status === 'pending_form') && (
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                                        Ação Necessária
+                                                    </span>
+                                                )}
+                                                {item.production_status === 'in_production' && (
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                                        <Clock className="w-3 h-3 mr-1" />
+                                                        Em Produção
+                                                    </span>
+                                                )}
+                                                {item.production_status === 'delivered' && (
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                                        Entregue
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-4 border-t border-gray-100 mt-auto flex flex-col gap-2">
+                                            {(!item.production_status || item.production_status === 'pending_form') && (
+                                                <button
+                                                    onClick={() => handleOpenModal(item)}
+                                                    className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <Edit3 className="w-4 h-4" />
+                                                    Preencher Dados da Luta
+                                                </button>
+                                            )}
+                                            {item.production_status === 'in_production' && (
+                                                <>
+                                                    <div className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-lg font-medium text-center text-sm cursor-not-allowed">
+                                                        Aguarde. Seu highlight está sendo editado!
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleOpenModal(item)}
+                                                        className="w-full py-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center justify-center gap-2 transition-colors"
+                                                    >
+                                                        <Edit3 className="w-4 h-4" />
+                                                        Alterar Informações
+                                                    </button>
+                                                </>
+                                            )}
+                                            {item.production_status === 'delivered' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleWatchDelivered(item.delivered_video_url || '#')}
+                                                        className="w-full py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                                    >
+                                                        <ExternalLink className="w-4 h-4" />
+                                                        Acessar / Baixar Vídeo
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleOpenModal(item)}
+                                                        className="w-full py-2 text-sm text-gray-500 hover:text-blue-600 font-medium flex items-center justify-center gap-2 transition-colors"
+                                                    >
+                                                        <Edit3 className="w-4 h-4" />
+                                                        Revisar Informações da Edição
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                            <Package className="w-6 h-6 mr-2 text-gray-500" />
+                            Histórico de Pedidos
+                        </h2>
+
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            {myOrders.length === 0 ? (
+                                <div className="p-8 text-center text-gray-500">
+                                    Nenhum pedido encontrado.
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-50 border-b border-gray-100 text-sm text-gray-600">
+                                                <th className="p-4 font-medium">Pedido</th>
+                                                <th className="p-4 font-medium">Data</th>
+                                                <th className="p-4 font-medium">Itens</th>
+                                                <th className="p-4 font-medium">Status</th>
+                                                <th className="p-4 font-medium text-right">Valor</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {myOrders.map(order => (
+                                                <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                                    <td className="p-4 text-sm font-mono text-gray-500">
+                                                        {order.id.substring(0, 8).toUpperCase()}
+                                                    </td>
+                                                    <td className="p-4 text-sm text-gray-600">
+                                                        {new Date(order.created_at).toLocaleDateString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                    </td>
+                                                    <td className="p-4 text-sm text-gray-900 font-medium">
+                                                        {order.order_items?.map((item: any, idx: number) => (
+                                                            <div key={idx} className="line-clamp-1">
+                                                                {item.videos?.title || 'Ingresso / Vídeo'}
+                                                            </div>
+                                                        ))}
+                                                    </td>
+                                                    <td className="p-4">
+                                                        {order.status === 'paid' && (
+                                                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Aprovado</span>
+                                                        )}
+                                                        {order.status === 'pending' && (
+                                                            <div className="flex flex-col gap-2 items-start">
+                                                                <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">Pendente Pagamento</span>
+                                                                {order.payment_method === 'pix' && order.pix_qr_code && (
+                                                                    <button
+                                                                        onClick={() => handleOpenPixModal(order)}
+                                                                        className="text-xs px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium mt-1"
+                                                                    >
+                                                                        Pagar Agora / Ver Pix
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        {(order.status === 'canceled' || order.status === 'failed') && (
+                                                            <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">Cancelado</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-4 text-right font-bold text-gray-900">
+                                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_amount)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <div className="max-w-3xl space-y-8">
+                        {/* Acesso Form */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Acesso e Segurança</h2>
+                            <form onSubmit={handleSaveEmail} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Email de Login</label>
+                                    <input
+                                        type="email"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                        required
+                                    />
+                                    <p className="text-xs text-gray-500 mt-2">Nós enviaremos uma confirmação para seu novo email se ele for alterado antes de efetivar a mudança.</p>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={savingEmail}
+                                    className="px-6 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed text-sm w-fit"
+                                >
+                                    {savingEmail ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Atualizando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="w-4 h-4" />
+                                            Atualizar Email
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                        </div>
+
+                        {/* Dados Pessoais Form */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Dados Pessoais</h2>
+                            <form onSubmit={handleSaveProfile} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Nome Completo</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                        value={profile.full_name}
+                                        onChange={e => setProfile({ ...profile, full_name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">WhatsApp</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                        value={profile.whatsapp}
+                                        placeholder="(11) 99999-9999"
+                                        onChange={e => setProfile({ ...profile, whatsapp: e.target.value })}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">CPF</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                        value={profile.cpf}
+                                        placeholder="000.000.000-00"
+                                        onChange={e => setProfile({ ...profile, cpf: e.target.value })}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-2">O CPF é necessário para emissão de comprovantes pelos gateways de pagamento.</p>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={savingProfile}
+                                    className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
+                                >
+                                    {savingProfile ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            Salvando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="w-5 h-5" />
+                                            Salvar Dados Pessoais
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 )}
-
-                <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                    <Package className="w-6 h-6 mr-2 text-gray-500" />
-                    Histórico de Pedidos
-                </h2>
-
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    {myOrders.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500">
-                            Nenhum pedido encontrado.
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-gray-50 border-b border-gray-100 text-sm text-gray-600">
-                                        <th className="p-4 font-medium">Pedido</th>
-                                        <th className="p-4 font-medium">Data</th>
-                                        <th className="p-4 font-medium">Itens</th>
-                                        <th className="p-4 font-medium">Status</th>
-                                        <th className="p-4 font-medium text-right">Valor</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {myOrders.map(order => (
-                                        <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                                            <td className="p-4 text-sm font-mono text-gray-500">
-                                                {order.id.substring(0, 8).toUpperCase()}
-                                            </td>
-                                            <td className="p-4 text-sm text-gray-600">
-                                                {new Date(order.created_at).toLocaleDateString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                            </td>
-                                            <td className="p-4 text-sm text-gray-900 font-medium">
-                                                {order.order_items?.map((item: any, idx: number) => (
-                                                    <div key={idx} className="line-clamp-1">
-                                                        {item.videos?.title || 'Ingresso / Vídeo'}
-                                                    </div>
-                                                ))}
-                                            </td>
-                                            <td className="p-4">
-                                                {order.status === 'paid' && (
-                                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Aprovado</span>
-                                                )}
-                                                {order.status === 'pending' && (
-                                                    <div className="flex flex-col gap-2 items-start">
-                                                        <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">Pendente Pagamento</span>
-                                                        {order.payment_method === 'pix' && order.pix_qr_code && (
-                                                            <button
-                                                                onClick={() => handleOpenPixModal(order)}
-                                                                className="text-xs px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium mt-1"
-                                                            >
-                                                                Pagar Agora / Ver Pix
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {(order.status === 'canceled' || order.status === 'failed') && (
-                                                    <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">Cancelado</span>
-                                                )}
-                                            </td>
-                                            <td className="p-4 text-right font-bold text-gray-900">
-                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_amount)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
             </main>
 
             {selectedOrderItem && (

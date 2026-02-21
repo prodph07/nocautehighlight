@@ -5,6 +5,7 @@ import { Navbar } from '../components/layout/Navbar';
 import { type PaymentMethod } from '../types';
 import { VideoService } from '../services/video.service';
 import { PagarmeService } from '../services/pagarme.service';
+import { SettingsService } from '../services/settings.service';
 import { supabase } from '../lib/supabase';
 import { isValidCPF } from '../utils/validators';
 
@@ -20,6 +21,10 @@ export function PaymentPage() {
 
     const [qrCode, setQrCode] = useState<any>(null);
     const [qrCodeUrl, setQrCodeUrl] = useState<any>(null);
+
+    // Upsell state
+    const [upsellPrice, setUpsellPrice] = useState<number>(20); // Default, updated on load
+    const [wantsFullFight, setWantsFullFight] = useState(false);
     // orderId state removed as it is never read for rendering
 
     const eventSlug = location.state?.eventSlug;
@@ -39,9 +44,14 @@ export function PaymentPage() {
         setUser(user);
 
         if (eventSlug) {
-            const videoData = await VideoService.getBySlug(eventSlug);
+            const [videoData, settingsData] = await Promise.all([
+                VideoService.getBySlug(eventSlug),
+                SettingsService.getSettings()
+            ]);
+
             if (videoData) {
                 setEvent(videoData);
+                setUpsellPrice(Number(settingsData.full_fight_upsell_price));
             } else {
                 navigate('/');
             }
@@ -108,9 +118,11 @@ export function PaymentPage() {
                 }
             }
 
+            const finalAmount = event.price_highlight + (wantsFullFight ? upsellPrice : 0);
+
             const transaction = await PagarmeService.createTransaction({
-                amount: Math.round(event.price_highlight * 100),
-                description: `Acesso ao evento: ${event.title}`,
+                amount: Math.round(finalAmount * 100),
+                description: `Acesso ao evento: ${event.title}${wantsFullFight ? ' + Luta na Íntegra' : ''}`,
                 payment_method: paymentMethod as PaymentMethod,
                 customer: {
                     name: customerName,
@@ -137,7 +149,7 @@ export function PaymentPage() {
                     status: status,
                     gateway_id: transaction.id,
                     payment_method: paymentMethod,
-                    total_amount: event.price_highlight,
+                    total_amount: finalAmount,
                     pix_qr_code: transaction.qrcode || null,
                     pix_qr_code_url: transaction.qrcode_url || null
                 })
@@ -156,7 +168,7 @@ export function PaymentPage() {
                 .insert({
                     order_id: orderData.id,
                     video_id: event.id,
-                    access_level: 'highlight_only'
+                    access_level: wantsFullFight ? 'full_access' : 'highlight_only'
                 });
 
             if (itemError) {
@@ -217,7 +229,7 @@ export function PaymentPage() {
 
                     {qrCodeUrl ? (
                         <div className="mb-6 flex justify-center">
-                            <img src={qrCodeUrl} alt="QR Code Pix" className="w-48 h-48" />
+                            <img src={qrCodeUrl} alt="QR Code Pix" loading="lazy" className="w-48 h-48" />
                         </div>
                     ) : (
                         <div className="mb-6 bg-gray-100 p-4 rounded text-xs break-all hidden">
@@ -264,6 +276,7 @@ export function PaymentPage() {
                             <img
                                 src={evt.teaser_url ? evt.teaser_url : 'https://via.placeholder.com/150'}
                                 alt={evt.title}
+                                loading="lazy"
                                 className="w-24 h-16 object-cover rounded-lg"
                             />
                             <div>
@@ -271,10 +284,36 @@ export function PaymentPage() {
                                 <p className="text-sm text-gray-500">{evt.event_name}</p>
                             </div>
                         </div>
+
+                        {/* Upsell Checkbox */}
+                        <div className="mb-6 p-4 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/50 hover:bg-blue-50 transition-colors cursor-pointer" onClick={() => setWantsFullFight(!wantsFullFight)}>
+                            <label className="flex items-start gap-3 cursor-pointer">
+                                <div className="pt-0.5">
+                                    <input
+                                        type="checkbox"
+                                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                        checked={wantsFullFight}
+                                        onChange={(e) => setWantsFullFight(e.target.checked)}
+                                    />
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="font-bold text-blue-900">Quero a Luta na Íntegra</span>
+                                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full font-bold">
+                                            + {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(upsellPrice)}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-blue-700/80">
+                                        Adicione a gravação completa da luta (sem cortes) ao seu pacote e receba todos os rounds.
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+
                         <div className="border-t border-gray-100 pt-4 flex justify-between items-center text-lg font-bold">
                             <span>Total</span>
                             <span className="text-blue-600">
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(evt.price_highlight)}
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(evt.price_highlight + (wantsFullFight ? upsellPrice : 0))}
                             </span>
                         </div>
                     </div>
@@ -332,7 +371,7 @@ export function PaymentPage() {
                                     Processando...
                                 </>
                             ) : (
-                                `Pagar ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(evt.price_highlight)}`
+                                `Pagar ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(evt.price_highlight + (wantsFullFight ? upsellPrice : 0))}`
                             )}
                         </button>
 

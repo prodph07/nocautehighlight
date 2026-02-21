@@ -44,7 +44,7 @@ export function HomePage() {
                         <span className="text-gray-100">ON DEMAND</span>
                     </h1>
                     <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-light">
-                        Assista aos melhores eventos de luta do Brasil. Muay Thai, Kickboxing e Boxe em alta qualidade.
+                        Adquira os melhores highlights de eventos de luta do Brasil. Muay Thai, Kickboxing e Boxe em alta qualidade.
                     </p>
 
                     <div className="max-w-xl mx-auto relative group">

@@ -13,6 +13,7 @@ export function EventCard({ event }: EventCardProps) {
                 <img
                     src={event.banner_url || 'https://via.placeholder.com/640x360?text=Evento+Sem+Banner'}
                     alt={event.title}
+                    loading="lazy"
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
@@ -28,10 +29,10 @@ export function EventCard({ event }: EventCardProps) {
             </Link>
 
             <div className="p-4">
-                <div className="flex items-center text-sm text-gray-600 mb-4 space-x-4">
-                    <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1.5 text-blue-600" />
-                        <span>{new Date(event.fight_date).toLocaleDateString()}</span>
+                <div className="flex flex-wrap gap-4 text-sm text-gray-300">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-red-500" />
+                        <span>{new Date(event.fight_date + 'T12:00:00').toLocaleDateString()}</span>
                     </div>
                     {event.location && (
                         <div className="flex items-center">

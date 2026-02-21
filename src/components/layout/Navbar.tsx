@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Video, User, LogOut } from 'lucide-react';
+import { Video, User, LogOut, HelpCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 
@@ -44,6 +44,14 @@ export function Navbar() {
 
 
                                 <Link
+                                    to="/ajuda"
+                                    className="flex items-center text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                                >
+                                    <HelpCircle className="w-5 h-5 mr-2" />
+                                    Ajuda
+                                </Link>
+
+                                <Link
                                     to="/minha-conta"
                                     className="flex items-center text-gray-700 hover:text-blue-600 font-medium transition-colors"
                                 >
@@ -61,6 +69,9 @@ export function Navbar() {
                             </div>
                         ) : (
                             <>
+                                <Link to="/ajuda" className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base hidden sm:block">
+                                    Ajuda
+                                </Link>
                                 <Link to="/login" className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base">
                                     Login
                                 </Link>

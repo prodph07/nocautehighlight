@@ -13,6 +13,7 @@ export function VideoCard({ video }: VideoCardProps) {
                 <img
                     src={video.teaser_url || 'https://via.placeholder.com/640x360?text=Sem+Imagem'}
                     alt={video.title}
+                    loading="lazy"
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -53,7 +54,7 @@ export function VideoCard({ video }: VideoCardProps) {
                         to={`/video/${video.slug}`}
                         className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors"
                     >
-                        Assistir
+                        Comprar
                     </Link>
                 </div>
             </div>

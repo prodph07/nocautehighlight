@@ -40,7 +40,7 @@ export function PixPaymentModal({ isOpen, onClose, qrCode, qrCodeUrl }: PixPayme
 
                     {qrCodeUrl ? (
                         <div className="mb-6 flex justify-center">
-                            <img src={qrCodeUrl} alt="QR Code Pix" className="w-48 h-48" />
+                            <img src={qrCodeUrl} alt="QR Code Pix" loading="lazy" className="w-48 h-48" />
                         </div>
                     ) : (
                         <div className="mb-6 bg-gray-100 p-4 rounded text-xs break-all hidden">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { type Event } from '../../types';
 import { EventService } from '../../services/event.service';
-import { Plus, Trash2, Calendar, MapPin, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Calendar, MapPin, Loader2, Edit, FolderOpen } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 export function AdminEventsPage() {
@@ -13,8 +13,10 @@ export function AdminEventsPage() {
         location: '',
         fight_date: new Date().toISOString().split('T')[0],
         banner_url: '',
+        drive_link: '',
         is_active: true
     });
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     useEffect(() => {
         loadEvents();
@@ -27,36 +29,61 @@ export function AdminEventsPage() {
         setLoading(false);
     };
 
-    const handleCreateEvent = async (e: React.FormEvent) => {
+    const handleSaveEvent = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const slug = newEvent.title?.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-            const eventToCreate = { ...newEvent, slug };
+            const eventData = { ...newEvent, slug };
 
-            const created = await EventService.create(eventToCreate);
-
-            if (created) {
-                alert('Evento criado com sucesso!');
-                setIsModalOpen(false);
-                loadEvents();
-                setNewEvent({
-                    title: '',
-                    location: '',
-                    fight_date: new Date().toISOString().split('T')[0],
-                    banner_url: '',
-                    is_active: true
-                });
+            let success = false;
+            if (editingId) {
+                success = await EventService.update(editingId, eventData);
+                if (success) alert('Evento atualizado com sucesso!');
             } else {
-                alert('Erro ao criar evento');
+                success = await EventService.create(eventData);
+                if (success) alert('Evento criado com sucesso!');
+            }
+
+            if (success) {
+                closeModal();
+                loadEvents();
+            } else {
+                alert('Erro ao salvar evento');
             }
         } catch (error) {
-            console.error('Error creating event:', error);
-            alert('Erro ao criar evento');
+            console.error('Error saving event:', error);
+            alert('Erro ao salvar evento');
         }
     };
 
-    const handleDeleteEvent = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este evento?')) return;
+    const handleEditClick = (event: Event) => {
+        setNewEvent({
+            title: event.title,
+            location: event.location || '',
+            fight_date: event.fight_date,
+            banner_url: event.banner_url || '',
+            drive_link: event.drive_link || '',
+            is_active: event.is_active
+        });
+        setEditingId(event.id);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setEditingId(null);
+        setNewEvent({
+            title: '',
+            location: '',
+            fight_date: new Date().toISOString().split('T')[0],
+            banner_url: '',
+            drive_link: '',
+            is_active: true
+        });
+    };
+
+    const handleDeleteEvent = async (id: string, title: string) => {
+        if (!confirm(`Tem certeza que deseja excluir o evento "${title}"?`)) return;
 
         const { error } = await supabase.from('events').delete().eq('id', id);
         if (error) {
@@ -71,7 +98,10 @@ export function AdminEventsPage() {
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-2xl font-bold text-gray-900">Gerenciar Eventos</h1>
                 <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => {
+                        closeModal();
+                        setIsModalOpen(true);
+                    }}
                     className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                     <Plus className="w-5 h-5 mr-2" />
@@ -108,7 +138,7 @@ export function AdminEventsPage() {
                                     <td className="p-4">
                                         <div className="flex items-center">
                                             {event.banner_url && (
-                                                <img src={event.banner_url} alt="" className="w-10 h-10 rounded object-cover mr-3" />
+                                                <img src={event.banner_url} alt="" loading="lazy" className="w-10 h-10 rounded object-cover mr-3" />
                                             )}
                                             <div>
                                                 <div className="font-medium text-gray-900">{event.title}</div>
@@ -119,7 +149,7 @@ export function AdminEventsPage() {
                                     <td className="p-4 text-gray-600">
                                         <div className="flex items-center">
                                             <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-                                            {new Date(event.fight_date).toLocaleDateString()}
+                                            {new Date(event.fight_date + 'T12:00:00').toLocaleDateString()}
                                         </div>
                                     </td>
                                     <td className="p-4 text-gray-600">
@@ -134,7 +164,18 @@ export function AdminEventsPage() {
                                         </span>
                                     </td>
                                     <td className="p-4 text-right">
-                                        <div className="flex justify-end gap-2">
+                                        <div className="flex justify-end gap-2 items-center">
+                                            {event.drive_link && (
+                                                <a
+                                                    href={event.drive_link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                    title="Acessar Pasta no Drive"
+                                                >
+                                                    <FolderOpen className="w-4 h-4" />
+                                                </a>
+                                            )}
                                             <a
                                                 href={`/admin/events/${event.id}/videos`}
                                                 className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors font-medium flex items-center"
@@ -143,7 +184,14 @@ export function AdminEventsPage() {
                                                 Card de Lutas
                                             </a>
                                             <button
-                                                onClick={() => handleDeleteEvent(event.id)}
+                                                onClick={() => handleEditClick(event)}
+                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="Editar"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteEvent(event.id, event.title)}
                                                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -160,8 +208,8 @@ export function AdminEventsPage() {
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-xl p-6 w-full max-w-lg">
-                        <h2 className="text-xl font-bold mb-4">Novo Evento</h2>
-                        <form onSubmit={handleCreateEvent} className="space-y-4">
+                        <h2 className="text-xl font-bold mb-4">{editingId ? 'Editar Evento' : 'Novo Evento'}</h2>
+                        <form onSubmit={handleSaveEvent} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Título do Evento</label>
                                 <input
@@ -208,10 +256,24 @@ export function AdminEventsPage() {
                                 />
                             </div>
 
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Link da Pasta no Drive (Somente Admin)</label>
+                                <input
+                                    type="url"
+                                    className="w-full mt-1 p-2 border rounded-lg"
+                                    placeholder="https://drive.google.com/..."
+                                    value={newEvent.drive_link}
+                                    onChange={e => setNewEvent({ ...newEvent, drive_link: e.target.value })}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Este link não será visto pelos clientes. É um atalho para facilitar o acesso da produção aos vídeos brutos.
+                                </p>
+                            </div>
+
                             <div className="flex justify-end gap-3 mt-6">
                                 <button
                                     type="button"
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={closeModal}
                                     className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
                                 >
                                     Cancelar
@@ -220,7 +282,7 @@ export function AdminEventsPage() {
                                     type="submit"
                                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                                 >
-                                    Criar Evento
+                                    Salvar Evento
                                 </button>
                             </div>
                         </form>

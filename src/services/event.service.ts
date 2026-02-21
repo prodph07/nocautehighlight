@@ -30,17 +30,39 @@ export const EventService = {
         return data;
     },
 
-    async create(event: Partial<Event>): Promise<Event | null> {
-        const { data, error } = await supabase
-            .from('events')
-            .insert(event)
-            .select()
-            .single();
+    async create(event: Partial<Event>): Promise<boolean> {
+        try {
+            const { error } = await supabase
+                .from('events')
+                .insert(event);
 
-        if (error) {
-            console.error('Error creating event:', error);
-            return null;
+            if (error) {
+                console.error('Error creating event:', error);
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            console.error('Unexpected error in create event:', error);
+            return false;
         }
-        return data;
+    },
+
+    async update(id: string, updates: Partial<Event>): Promise<boolean> {
+        try {
+            const { error } = await supabase
+                .from('events')
+                .update(updates)
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error updating event:', error);
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.error('Unexpected error in update event:', error);
+            return false;
+        }
     }
 };

@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Package, Calendar, Scissors } from 'lucide-react';
+import { LayoutDashboard, LogOut, Package, Calendar, Scissors, Settings } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 export function AdminLayout() {
@@ -55,6 +55,14 @@ export function AdminLayout() {
                     >
                         <Scissors className="w-5 h-5" />
                         <span>Fila de Edição</span>
+                    </Link>
+
+                    <Link
+                        to="/admin/settings"
+                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/settings') ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+                    >
+                        <Settings className="w-5 h-5" />
+                        <span>Configurações</span>
                     </Link>
                 </nav>
 

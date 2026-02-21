@@ -14,6 +14,7 @@ export interface Event {
     fight_date: string;
     location?: string;
     banner_url?: string;
+    drive_link?: string;
     is_active: boolean;
     created_at?: string;
 }

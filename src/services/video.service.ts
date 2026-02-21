@@ -154,14 +154,18 @@ export const VideoService = {
         }
     },
 
-    async getByEventId(eventId: string): Promise<FightEvent[]> {
+    async getByEventId(eventId: string, includeInactive = false): Promise<FightEvent[]> {
         try {
-            const { data, error } = await supabase
+            let queryBuilder = supabase
                 .from('videos')
                 .select('*')
-                .eq('event_id', eventId)
-                .eq('is_active', true)
-                .order('price_highlight', { ascending: false }); // Show main fights (usually more expensive or just order by title/schedule) possibly
+                .eq('event_id', eventId);
+
+            if (!includeInactive) {
+                queryBuilder = queryBuilder.eq('is_active', true);
+            }
+
+            const { data, error } = await queryBuilder.order('price_highlight', { ascending: false }); // Show main fights (usually more expensive or just order by title/schedule) possibly
 
             if (error) {
                 console.error('Error fetching videos by event:', error);
