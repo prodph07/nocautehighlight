@@ -6,26 +6,37 @@ interface ProductionDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (formData: ProductionFormData) => Promise<void>;
+    initialData?: ProductionFormData;
 }
 
-export function ProductionDetailsModal({ isOpen, onClose, onSubmit }: ProductionDetailsModalProps) {
-    const [formData, setFormData] = useState<ProductionFormData>({
-        fighterName: '',
-        age: '',
-        instagram: '',
-        email: '',
-        roundsCount: '',
-        musicLink: '',
-        contact1: '',
-        contact2: '',
-        cornerColor: '',
-        team: '',
-        opponentName: '',
-        notes: ''
-    });
+const emptyData: ProductionFormData = {
+    fighterName: '',
+    age: '',
+    instagram: '',
+    email: '',
+    roundsCount: '',
+    musicLink: '',
+    contact1: '',
+    contact2: '',
+    cornerColor: '',
+    team: '',
+    opponentName: '',
+    notes: ''
+};
+
+export function ProductionDetailsModal({ isOpen, onClose, onSubmit, initialData }: ProductionDetailsModalProps) {
+    const [formData, setFormData] = useState<ProductionFormData>(emptyData);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setFormData(initialData ? { ...emptyData, ...initialData } : emptyData);
+        } else {
+            setFormData(emptyData); // Clear when closing to avoid flickering old data
+        }
+    }, [isOpen, initialData]);
 
     if (!isOpen) return null;
 

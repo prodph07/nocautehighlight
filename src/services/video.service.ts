@@ -113,6 +113,8 @@ export const VideoService = {
                     status,
                     total_amount,
                     payment_method,
+                    pix_qr_code,
+                    pix_qr_code_url,
                     order_items (
                         id,
                         order_id,

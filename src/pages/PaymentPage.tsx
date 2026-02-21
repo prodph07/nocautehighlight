@@ -137,7 +137,9 @@ export function PaymentPage() {
                     status: status,
                     gateway_id: transaction.id,
                     payment_method: paymentMethod,
-                    total_amount: event.price_highlight
+                    total_amount: event.price_highlight,
+                    pix_qr_code: transaction.qrcode || null,
+                    pix_qr_code_url: transaction.qrcode_url || null
                 })
                 .select()
                 .single();

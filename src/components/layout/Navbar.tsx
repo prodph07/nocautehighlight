@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Video, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { Video, User, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 
@@ -41,13 +41,7 @@ export function Navbar() {
                     <div className="flex items-center space-x-4">
                         {user ? (
                             <div className="flex items-center space-x-4">
-                                <Link
-                                    to="/admin"
-                                    className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-                                    title="Painel Admin (Demo)"
-                                >
-                                    <LayoutDashboard className="w-5 h-5" />
-                                </Link>
+
 
                                 <Link
                                     to="/minha-conta"

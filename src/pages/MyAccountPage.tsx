@@ -5,6 +5,7 @@ import { Navbar } from '../components/layout/Navbar';
 import { VideoService } from '../services/video.service';
 import { supabase } from '../lib/supabase';
 import { ProductionDetailsModal } from '../components/ProductionDetailsModal';
+import { PixPaymentModal } from '../components/PixPaymentModal';
 import { type Order, type OrderItem, type ProductionFormData } from '../types';
 
 export function MyAccountPage() {
@@ -16,6 +17,10 @@ export function MyAccountPage() {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOrderItem, setSelectedOrderItem] = useState<OrderItem | null>(null);
+
+    // Pix Modal state
+    const [isPixModalOpen, setIsPixModalOpen] = useState(false);
+    const [selectedPixOrder, setSelectedPixOrder] = useState<Order | null>(null);
 
     useEffect(() => {
         checkAuth();
@@ -46,10 +51,16 @@ export function MyAccountPage() {
     const handleSubmitForm = async (formData: ProductionFormData) => {
         if (!selectedOrderItem) return;
 
+        // If the item was pending_form, move it to in_production.
+        // Otherwise, it might be an edit for an item already in_production or delivered, so we keep the existing status.
+        const newStatus = (!selectedOrderItem.production_status || selectedOrderItem.production_status === 'pending_form')
+            ? 'in_production'
+            : selectedOrderItem.production_status;
+
         const { error } = await supabase
             .from('order_items')
             .update({
-                production_status: 'in_production',
+                production_status: newStatus,
                 production_form_data: formData
             })
             .eq('id', selectedOrderItem.id);
@@ -71,6 +82,11 @@ export function MyAccountPage() {
     const handleLogout = async () => {
         await supabase.auth.signOut();
         navigate('/');
+    };
+
+    const handleOpenPixModal = (order: Order) => {
+        setSelectedPixOrder(order);
+        setIsPixModalOpen(true);
     };
 
     const paidOrderItems = myOrders
@@ -152,7 +168,7 @@ export function MyAccountPage() {
                                     </div>
                                 </div>
 
-                                <div className="pt-4 border-t border-gray-100 mt-auto">
+                                <div className="pt-4 border-t border-gray-100 mt-auto flex flex-col gap-2">
                                     {(!item.production_status || item.production_status === 'pending_form') && (
                                         <button
                                             onClick={() => handleOpenModal(item)}
@@ -163,18 +179,36 @@ export function MyAccountPage() {
                                         </button>
                                     )}
                                     {item.production_status === 'in_production' && (
-                                        <div className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-lg font-medium text-center text-sm cursor-not-allowed">
-                                            Aguarde. Seu highlight está sendo editado!
-                                        </div>
+                                        <>
+                                            <div className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-lg font-medium text-center text-sm cursor-not-allowed">
+                                                Aguarde. Seu highlight está sendo editado!
+                                            </div>
+                                            <button
+                                                onClick={() => handleOpenModal(item)}
+                                                className="w-full py-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center justify-center gap-2 transition-colors"
+                                            >
+                                                <Edit3 className="w-4 h-4" />
+                                                Alterar Informações
+                                            </button>
+                                        </>
                                     )}
                                     {item.production_status === 'delivered' && (
-                                        <button
-                                            onClick={() => handleWatchDelivered(item.delivered_video_url || '#')}
-                                            className="w-full py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <ExternalLink className="w-4 h-4" />
-                                            Acessar / Baixar Vídeo
-                                        </button>
+                                        <>
+                                            <button
+                                                onClick={() => handleWatchDelivered(item.delivered_video_url || '#')}
+                                                className="w-full py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                                Acessar / Baixar Vídeo
+                                            </button>
+                                            <button
+                                                onClick={() => handleOpenModal(item)}
+                                                className="w-full py-2 text-sm text-gray-500 hover:text-blue-600 font-medium flex items-center justify-center gap-2 transition-colors"
+                                            >
+                                                <Edit3 className="w-4 h-4" />
+                                                Revisar Informações da Edição
+                                            </button>
+                                        </>
                                     )}
                                 </div>
                             </div>
@@ -225,7 +259,17 @@ export function MyAccountPage() {
                                                     <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Aprovado</span>
                                                 )}
                                                 {order.status === 'pending' && (
-                                                    <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">Pendente Pagamento</span>
+                                                    <div className="flex flex-col gap-2 items-start">
+                                                        <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">Pendente Pagamento</span>
+                                                        {order.payment_method === 'pix' && order.pix_qr_code && (
+                                                            <button
+                                                                onClick={() => handleOpenPixModal(order)}
+                                                                className="text-xs px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium mt-1"
+                                                            >
+                                                                Pagar Agora / Ver Pix
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 )}
                                                 {(order.status === 'canceled' || order.status === 'failed') && (
                                                     <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">Cancelado</span>
@@ -248,6 +292,16 @@ export function MyAccountPage() {
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     onSubmit={handleSubmitForm}
+                    initialData={selectedOrderItem.production_form_data || undefined}
+                />
+            )}
+
+            {selectedPixOrder && selectedPixOrder.pix_qr_code && (
+                <PixPaymentModal
+                    isOpen={isPixModalOpen}
+                    onClose={() => setIsPixModalOpen(false)}
+                    qrCode={selectedPixOrder.pix_qr_code}
+                    qrCodeUrl={selectedPixOrder.pix_qr_code_url || null}
                 />
             )}
         </div>

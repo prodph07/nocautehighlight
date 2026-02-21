@@ -9,6 +9,7 @@ export function AdminProductionPage() {
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [deliveryUrls, setDeliveryUrls] = useState<{ [key: string]: string }>({});
     const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
+    const [editingDelivered, setEditingDelivered] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         loadProductions();
@@ -43,6 +44,15 @@ export function AdminProductionPage() {
                 return dateB - dateA;
             });
             setProductions(sorted);
+
+            // Pre-populate delivery URLs for items that are already delivered
+            const initialUrls: Record<string, string> = {};
+            sorted.forEach(item => {
+                if (item.delivered_video_url) {
+                    initialUrls[item.id] = item.delivered_video_url;
+                }
+            });
+            setDeliveryUrls(initialUrls);
         } else {
             console.error("Error fetching productions:", prodRes.error);
         }
@@ -277,24 +287,99 @@ export function AdminProductionPage() {
                                                     <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
                                                     Entregues Recentes ({group.eventTitle})
                                                 </h3>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-4">
                                                     {group.delivered.map(item => {
                                                         const formData = item.production_form_data || {};
+                                                        const isEditing = editingDelivered[item.id];
+
                                                         return (
-                                                            <div key={item.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
-                                                                <div>
-                                                                    <h4 className="font-bold text-gray-900">{formData.fighterName || 'Atleta'}</h4>
-                                                                    <p className="text-sm text-gray-500">{item.videos?.title}</p>
+                                                            <div key={item.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm transition-all text-sm">
+                                                                <div className="flex items-center justify-between">
+                                                                    <div>
+                                                                        <h4 className="font-bold text-gray-900 text-base">{formData.fighterName || 'Atleta'}</h4>
+                                                                        <p className="text-sm text-gray-500">{item.videos?.title}</p>
+                                                                    </div>
+                                                                    <div className="flex gap-2">
+                                                                        <button
+                                                                            onClick={() => setEditingDelivered(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                                                                            className="px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium border border-transparent hover:border-blue-100"
+                                                                        >
+                                                                            {isEditing ? 'Ocultar Detalhes' : 'Editar / Conferir'}
+                                                                        </button>
+                                                                        <a
+                                                                            href={item.delivered_video_url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg transition-colors font-medium flex items-center border border-green-200"
+                                                                            title="Ver Arquivo Final"
+                                                                        >
+                                                                            <ExternalLink className="w-4 h-4 mr-1.5" />
+                                                                            Vídeo Final
+                                                                        </a>
+                                                                    </div>
                                                                 </div>
-                                                                <a
-                                                                    href={item.delivered_video_url}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                                    title="Ver Arquivo Final"
-                                                                >
-                                                                    <ExternalLink className="w-5 h-5" />
-                                                                </a>
+
+                                                                {isEditing && (
+                                                                    <div className="mt-6 pt-6 border-t border-gray-100">
+                                                                        <div className="bg-gray-50 p-4 rounded-xl mb-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm border border-gray-100">
+                                                                            <div>
+                                                                                <p className="text-gray-500 mb-1">Contato</p>
+                                                                                <p className="font-medium text-gray-900">{formData.email}</p>
+                                                                                <p className="font-medium text-gray-900">{formData.contact1}</p>
+                                                                                {formData.instagram && <p className="text-blue-600">{formData.instagram}</p>}
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-gray-500 mb-1">Dados da Luta</p>
+                                                                                <p className="font-medium text-gray-900">Rounds: {formData.roundsCount}</p>
+                                                                                <p className="font-medium text-gray-900">Corner: {formData.cornerColor}</p>
+                                                                                <p className="font-medium text-gray-900">Equipe: {formData.team}</p>
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-gray-500 mb-1">Música</p>
+                                                                                {formData.musicLink ? (
+                                                                                    <a href={formData.musicLink} target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline flex items-center font-medium">
+                                                                                        Abrir Link YouTube
+                                                                                    </a>
+                                                                                ) : (
+                                                                                    <span className="text-gray-400">Não informada</span>
+                                                                                )}
+                                                                                {formData.notes && (
+                                                                                    <div className="mt-2">
+                                                                                        <p className="text-gray-500 mb-1">Obs:</p>
+                                                                                        <p className="text-gray-700 bg-yellow-50 p-2 rounded border border-yellow-200">{formData.notes}</p>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="pt-2">
+                                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                                Atualizar Link do Vídeo Finalizado
+                                                                            </label>
+                                                                            <div className="flex gap-4">
+                                                                                <input
+                                                                                    type="url"
+                                                                                    placeholder="https://..."
+                                                                                    value={deliveryUrls[item.id] || ''}
+                                                                                    onChange={(e) => handleUrlChange(item.id, e.target.value)}
+                                                                                    className="flex-grow px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50/30"
+                                                                                />
+                                                                                <button
+                                                                                    onClick={() => handleDeliver(item.id)}
+                                                                                    disabled={updatingId === item.id || !deliveryUrls[item.id]}
+                                                                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                                                                                >
+                                                                                    {updatingId === item.id ? (
+                                                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                                                    ) : (
+                                                                                        <Send className="w-4 h-4" />
+                                                                                    )}
+                                                                                    Atualizar Link
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         );
                                                     })}

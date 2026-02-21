@@ -74,6 +74,8 @@ export interface Order {
     payment_method: PaymentMethod;
     total_amount: number;
     created_at: string;
+    pix_qr_code?: string;
+    pix_qr_code_url?: string;
     order_items?: OrderItem[];
 }
 
