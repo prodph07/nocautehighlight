@@ -12,6 +12,7 @@ const HelpPage = lazy(() => import('./pages/HelpPage').then(module => ({ default
 const TermsPage = lazy(() => import('./pages/TermsPage').then(module => ({ default: module.TermsPage })));
 
 const AdminLayout = lazy(() => import('./components/layout/AdminLayout').then(module => ({ default: module.AdminLayout })));
+const AdminRoute = lazy(() => import('./components/auth/AdminRoute').then(module => ({ default: module.AdminRoute })));
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then(module => ({ default: module.AdminDashboardPage })));
 const AdminEventsPage = lazy(() => import('./pages/admin/AdminEventsPage').then(module => ({ default: module.AdminEventsPage })));
 const AdminEventVideosPage = lazy(() => import('./pages/admin/AdminEventVideosPage').then(module => ({ default: module.AdminEventVideosPage })));
@@ -21,6 +22,8 @@ const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage').then(
 
 const LoginPage = lazy(() => import('./pages/auth/LoginPage').then(module => ({ default: module.LoginPage })));
 const SignupPage = lazy(() => import('./pages/auth/SignupPage').then(module => ({ default: module.SignupPage })));
+const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage').then(module => ({ default: module.ResetPasswordPage })));
+const UpdatePasswordPage = lazy(() => import('./pages/auth/UpdatePasswordPage').then(module => ({ default: module.UpdatePasswordPage })));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -36,6 +39,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/update-password" element={<UpdatePasswordPage />} />
           <Route path="/event/:slug" element={<EventDetailsPage />} />
           <Route path="/video/:slug" element={<VideoDetailsPage />} />
           <Route path="/checkout" element={<PaymentPage />} />
@@ -44,13 +49,15 @@ function App() {
           <Route path="/termos" element={<TermsPage />} />
 
           {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboardPage />} />
-            <Route path="events" element={<AdminEventsPage />} />
-            <Route path="events/:eventId/videos" element={<AdminEventVideosPage />} />
-            <Route path="production" element={<AdminProductionPage />} />
-            <Route path="orders" element={<AdminOrdersPage />} />
-            <Route path="settings" element={<AdminSettingsPage />} />
+          <Route path="/admin" element={<AdminRoute />}>
+            <Route element={<AdminLayout />}>
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="events" element={<AdminEventsPage />} />
+              <Route path="events/:eventId/videos" element={<AdminEventVideosPage />} />
+              <Route path="production" element={<AdminProductionPage />} />
+              <Route path="orders" element={<AdminOrdersPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
+            </Route>
           </Route>
         </Routes>
       </Suspense>

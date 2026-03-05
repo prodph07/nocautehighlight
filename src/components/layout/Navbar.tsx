@@ -28,14 +28,14 @@ export function Navbar() {
     };
 
     return (
-        <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <nav className="bg-brand-dark border-b border-brand-red/20 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     <Link to="/" className="flex items-center space-x-2">
-                        <div className="p-2 bg-blue-600 rounded-lg">
+                        <div className="p-2 bg-gradient-to-br from-brand-red to-brand-orange rounded-lg shadow-lg shadow-brand-red/20">
                             <Video className="w-6 h-6 text-white" />
                         </div>
-                        <span className="text-xl font-bold text-gray-900">FightVideos</span>
+                        <span className="text-2xl font-black font-heading tracking-wider uppercase italic text-white">FightVideos</span>
                     </Link>
 
                     <div className="flex items-center space-x-4">
@@ -45,7 +45,7 @@ export function Navbar() {
 
                                 <Link
                                     to="/ajuda"
-                                    className="flex items-center text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                                    className="flex items-center text-gray-300 hover:text-brand-orange font-medium transition-colors"
                                 >
                                     <HelpCircle className="w-5 h-5 mr-2" />
                                     Ajuda
@@ -53,7 +53,7 @@ export function Navbar() {
 
                                 <Link
                                     to="/minha-conta"
-                                    className="flex items-center text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                                    className="flex items-center text-gray-300 hover:text-brand-orange font-medium transition-colors"
                                 >
                                     <User className="w-5 h-5 mr-2" />
                                     Minha Conta
@@ -61,7 +61,7 @@ export function Navbar() {
 
                                 <button
                                     onClick={handleLogout}
-                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    className="p-2 text-brand-red hover:bg-brand-red/10 rounded-lg transition-colors"
                                     title="Sair"
                                 >
                                     <LogOut className="w-5 h-5" />
@@ -69,13 +69,13 @@ export function Navbar() {
                             </div>
                         ) : (
                             <>
-                                <Link to="/ajuda" className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base hidden sm:block">
+                                <Link to="/ajuda" className="text-gray-300 hover:text-white font-medium text-sm sm:text-base hidden sm:block transition-colors">
                                     Ajuda
                                 </Link>
-                                <Link to="/login" className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base">
+                                <Link to="/login" className="text-gray-300 hover:text-white font-medium text-sm sm:text-base transition-colors">
                                     Login
                                 </Link>
-                                <Link to="/signup" className="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors text-sm sm:text-base">
+                                <Link to="/signup" className="px-5 py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-lg font-bold uppercase tracking-wider text-sm hover:shadow-lg hover:shadow-brand-red/30 transition-all font-heading">
                                     Cadastrar
                                 </Link>
                             </>

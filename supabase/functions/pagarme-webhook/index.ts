@@ -28,21 +28,13 @@ Deno.serve(async (req) => {
     }
 
     let newStatus = null;
-    let gatewayId = null;
 
     if (eventType === 'order.paid') {
       newStatus = 'paid';
-      gatewayId = eventData.id; // Or charges[0].id depending on how it was saved
     } else if (eventType === 'charge.paid') {
       newStatus = 'paid';
-      gatewayId = eventData.order.id; // Usually charge webhook links back to order
-      // NOTE: Our checkout saves the charge.id as gateway_id. Let's try to match by charge ID if this is a charge event
-      if (eventData.id) {
-        gatewayId = eventData.id;
-      }
     } else if (eventType.includes('failed') || eventType.includes('canceled')) {
       newStatus = 'failed';
-      gatewayId = eventData.id;
     }
 
     // If we didn't determine a relevant status change, just return 200 OK so Pagar.me stops retrying
@@ -67,7 +59,7 @@ Deno.serve(async (req) => {
     let orderToUpdateId = null;
 
     // Tenta achar com o charge.id
-    const { data: ordersByGateway, error: findErr1 } = await supabase
+    const { data: ordersByGateway } = await supabase
       .from('orders')
       .select('id')
       .eq('gateway_id', eventData.id) // If event is charge.paid, data.id is the charge ID
@@ -77,7 +69,7 @@ Deno.serve(async (req) => {
       orderToUpdateId = ordersByGateway[0].id;
     } else if (eventData.order && eventData.order.id) {
       // Tenta achar com o order.id pai (caso o webhook seja charge.paid mas a gente tenha salvo order.id)
-      const { data: ordersByOrder, error: findErr2 } = await supabase
+      const { data: ordersByOrder } = await supabase
         .from('orders')
         .select('id')
         .eq('gateway_id', eventData.order.id)

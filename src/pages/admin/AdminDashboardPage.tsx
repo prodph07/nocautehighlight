@@ -14,7 +14,7 @@ export function AdminDashboardPage() {
         loadStats();
     }, []);
 
-    const loadStats = async () => {
+    async function loadStats() {
         try {
             // Fetch counts
             const { count: videosCount } = await supabase

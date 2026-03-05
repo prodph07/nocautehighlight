@@ -34,6 +34,11 @@ export function MyAccountPage() {
     const [email, setEmail] = useState('');
     const [savingEmail, setSavingEmail] = useState(false);
 
+    // Password Update State
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [savingPassword, setSavingPassword] = useState(false);
+
     useEffect(() => {
         checkAuth();
     }, []);
@@ -130,6 +135,40 @@ export function MyAccountPage() {
         }
     };
 
+    const handleSavePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) return;
+
+        if (password !== confirmPassword) {
+            alert('As senhas não coincidem.');
+            return;
+        }
+
+        if (password.length < 6) {
+            alert('A senha deve ter pelo menos 6 caracteres.');
+            return;
+        }
+
+        setSavingPassword(true);
+
+        try {
+            const { error } = await supabase.auth.updateUser({
+                password: password
+            });
+
+            if (error) throw error;
+
+            alert('Senha atualizada com sucesso!');
+            setPassword('');
+            setConfirmPassword('');
+        } catch (error: any) {
+            console.error('Error saving password:', error);
+            alert('Erro ao atualizar senha: ' + error.message);
+        } finally {
+            setSavingPassword(false);
+        }
+    };
+
     const handleOpenModal = (item: OrderItem) => {
         setSelectedOrderItem(item);
         setIsModalOpen(true);
@@ -194,32 +233,32 @@ export function MyAccountPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="min-h-screen bg-brand-dark flex flex-col font-sans text-gray-100">
             <Navbar />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-grow w-full">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Minha Conta</h1>
+                <div className="flex justify-between items-center mb-8 border-b border-brand-red/30 pb-6">
+                    <h1 className="text-3xl lg:text-4xl font-black font-heading uppercase italic tracking-wider text-white">Minha Conta</h1>
                     <button
                         onClick={handleLogout}
-                        className="flex items-center text-gray-600 hover:text-red-600 transition-colors"
+                        className="flex items-center text-gray-400 hover:text-brand-red transition-colors font-bold uppercase tracking-wide"
                     >
                         <LogOut className="w-5 h-5 mr-2" />
                         Sair
                     </button>
                 </div>
 
-                <div className="flex space-x-4 mb-8 border-b border-gray-200">
+                <div className="flex space-x-4 mb-8">
                     <button
                         onClick={() => setActiveTab('orders')}
-                        className={`pb-4 px-2 font-medium text-lg flex items-center transition-colors border-b-2 ${activeTab === 'orders' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        className={`pb-4 px-2 font-black font-heading uppercase italic tracking-widest text-lg flex items-center transition-all border-b-2 ${activeTab === 'orders' ? 'border-brand-orange text-brand-orange' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
                     >
                         <Package className="w-5 h-5 mr-2" />
                         Meus Pedidos
                     </button>
                     <button
                         onClick={() => setActiveTab('settings')}
-                        className={`pb-4 px-2 font-medium text-lg flex items-center transition-colors border-b-2 ${activeTab === 'settings' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        className={`pb-4 px-2 font-black font-heading uppercase italic tracking-widest text-lg flex items-center transition-all border-b-2 ${activeTab === 'settings' ? 'border-brand-orange text-brand-orange' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
                     >
                         <Settings className="w-5 h-5 mr-2" />
                         Configurações
@@ -228,17 +267,17 @@ export function MyAccountPage() {
 
                 {activeTab === 'orders' ? (
                     <>
-                        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                            <Edit3 className="w-6 h-6 mr-2 text-blue-600" />
+                        <h2 className="text-xl font-black font-heading uppercase tracking-widest text-white mb-6 flex items-center bg-black/40 p-4 rounded-xl border border-brand-red/10 w-fit inline-flex">
+                            <Edit3 className="w-6 h-6 mr-3 text-brand-orange" />
                             Minhas Edições e Highlights
                         </h2>
 
                         {paidOrderItems.length === 0 ? (
-                            <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm mb-12">
-                                <p className="text-gray-500 mb-4">Você ainda não possui pacotes de edição pagos.</p>
+                            <div className="text-center py-20 bg-black rounded-2xl border border-brand-red/20 shadow-sm mb-12">
+                                <p className="text-gray-400 mb-6 font-medium">Você ainda não possui pacotes de edição pagos.</p>
                                 <button
                                     onClick={() => navigate('/')}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+                                    className="px-6 py-3 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-lg font-black font-heading uppercase italic tracking-widest hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all"
                                 >
                                     Ver Catálogo de Eventos
                                 </button>
@@ -246,27 +285,27 @@ export function MyAccountPage() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
                                 {paidOrderItems.map(item => (
-                                    <div key={item.id} className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 flex flex-col">
+                                    <div key={item.id} className="bg-black rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] border border-brand-red/20 p-6 flex flex-col hover:border-brand-orange transition-colors">
                                         <div className="mb-4 flex-grow">
-                                            <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">
+                                            <h3 className="font-bold font-heading uppercase tracking-wide text-white mb-1 line-clamp-2">
                                                 {item.videos?.title || 'Pacote de Highlight'}
                                             </h3>
 
                                             {/* Status Badge */}
                                             <div className="mt-3">
                                                 {(!item.production_status || item.production_status === 'pending_form') && (
-                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-brand-red/20 text-brand-orange border border-brand-orange/30">
                                                         Ação Necessária
                                                     </span>
                                                 )}
                                                 {item.production_status === 'in_production' && (
-                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-900/40 text-blue-400 border border-blue-500/30">
                                                         <Clock className="w-3 h-3 mr-1" />
                                                         Em Produção
                                                     </span>
                                                 )}
                                                 {item.production_status === 'delivered' && (
-                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-900/40 text-green-400 border border-green-500/30">
                                                         <CheckCircle className="w-3 h-3 mr-1" />
                                                         Entregue
                                                     </span>
@@ -274,11 +313,11 @@ export function MyAccountPage() {
                                             </div>
                                         </div>
 
-                                        <div className="pt-4 border-t border-gray-100 mt-auto flex flex-col gap-2">
+                                        <div className="pt-4 border-t border-brand-red/20 mt-auto flex flex-col gap-2">
                                             {(!item.production_status || item.production_status === 'pending_form') && (
                                                 <button
                                                     onClick={() => handleOpenModal(item)}
-                                                    className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                                                    className="w-full py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-lg font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all flex items-center justify-center gap-2"
                                                 >
                                                     <Edit3 className="w-4 h-4" />
                                                     Preencher Dados da Luta
@@ -286,12 +325,12 @@ export function MyAccountPage() {
                                             )}
                                             {item.production_status === 'in_production' && (
                                                 <>
-                                                    <div className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-lg font-medium text-center text-sm cursor-not-allowed">
-                                                        Aguarde. Seu highlight está sendo editado!
+                                                    <div className="w-full py-2.5 bg-brand-dark border border-brand-red/10 text-brand-orange rounded-lg font-bold text-center text-sm cursor-not-allowed uppercase font-heading">
+                                                        Aguarde... Equipando luvas!
                                                     </div>
                                                     <button
                                                         onClick={() => handleOpenModal(item)}
-                                                        className="w-full py-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center justify-center gap-2 transition-colors"
+                                                        className="w-full py-2 text-sm text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 transition-colors uppercase font-heading tracking-wider"
                                                     >
                                                         <Edit3 className="w-4 h-4" />
                                                         Alterar Informações
@@ -302,17 +341,17 @@ export function MyAccountPage() {
                                                 <>
                                                     <button
                                                         onClick={() => handleWatchDelivered(item.delivered_video_url || '#')}
-                                                        className="w-full py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                                        className="w-full py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                                                     >
                                                         <ExternalLink className="w-4 h-4" />
-                                                        Acessar / Baixar Vídeo
+                                                        Acessar / Baixar
                                                     </button>
                                                     <button
                                                         onClick={() => handleOpenModal(item)}
-                                                        className="w-full py-2 text-sm text-gray-500 hover:text-blue-600 font-medium flex items-center justify-center gap-2 transition-colors"
+                                                        className="w-full py-2 text-sm text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 transition-colors uppercase font-heading"
                                                     >
                                                         <Edit3 className="w-4 h-4" />
-                                                        Revisar Informações da Edição
+                                                        Revisar Informações
                                                     </button>
                                                 </>
                                             )}
@@ -322,38 +361,38 @@ export function MyAccountPage() {
                             </div>
                         )}
 
-                        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                            <Package className="w-6 h-6 mr-2 text-gray-500" />
+                        <h2 className="text-xl font-black font-heading uppercase tracking-widest text-white mb-6 flex items-center bg-black/40 p-4 rounded-xl border border-brand-red/10 w-fit inline-flex">
+                            <Package className="w-6 h-6 mr-3 text-brand-orange" />
                             Histórico de Pedidos
                         </h2>
 
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="bg-black rounded-2xl shadow-lg border border-brand-red/20 overflow-hidden">
                             {myOrders.length === 0 ? (
-                                <div className="p-8 text-center text-gray-500">
+                                <div className="p-8 text-center text-gray-500 font-medium font-heading uppercase tracking-wider">
                                     Nenhum pedido encontrado.
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left border-collapse">
                                         <thead>
-                                            <tr className="bg-gray-50 border-b border-gray-100 text-sm text-gray-600">
-                                                <th className="p-4 font-medium">Pedido</th>
-                                                <th className="p-4 font-medium">Data</th>
-                                                <th className="p-4 font-medium">Itens</th>
-                                                <th className="p-4 font-medium">Status</th>
-                                                <th className="p-4 font-medium text-right">Valor</th>
+                                            <tr className="bg-brand-dark border-b border-brand-red/30">
+                                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs">Pedido</th>
+                                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs">Data</th>
+                                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs">Itens</th>
+                                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs">Status</th>
+                                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs text-right">Valor</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {myOrders.map(order => (
-                                                <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                                                    <td className="p-4 text-sm font-mono text-gray-500">
-                                                        {order.id.substring(0, 8).toUpperCase()}
+                                                <tr key={order.id} className="border-b border-brand-red/10 hover:bg-brand-dark/50 transition-colors">
+                                                    <td className="p-4 text-sm font-mono text-brand-orange uppercase">
+                                                        #{order.id.substring(0, 8)}
                                                     </td>
-                                                    <td className="p-4 text-sm text-gray-600">
+                                                    <td className="p-4 text-sm text-gray-400 font-medium">
                                                         {new Date(order.created_at).toLocaleDateString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                     </td>
-                                                    <td className="p-4 text-sm text-gray-900 font-medium">
+                                                    <td className="p-4 text-sm text-gray-200 font-bold uppercase font-heading tracking-wide">
                                                         {order.order_items?.map((item: any, idx: number) => (
                                                             <div key={idx} className="line-clamp-1">
                                                                 {item.videos?.title || 'Ingresso / Vídeo'}
@@ -362,26 +401,26 @@ export function MyAccountPage() {
                                                     </td>
                                                     <td className="p-4">
                                                         {order.status === 'paid' && (
-                                                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Aprovado</span>
+                                                            <span className="px-3 py-1 bg-green-900/40 border border-green-500/30 text-green-400 rounded-lg text-xs font-bold uppercase tracking-wider">Aprovado</span>
                                                         )}
                                                         {order.status === 'pending' && (
                                                             <div className="flex flex-col gap-2 items-start">
-                                                                <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">Pendente Pagamento</span>
+                                                                <span className="px-3 py-1 bg-yellow-900/40 border border-yellow-500/30 text-yellow-400 rounded-lg text-xs font-bold uppercase tracking-wider">Aguardando</span>
                                                                 {order.payment_method === 'pix' && order.pix_qr_code && (
                                                                     <button
                                                                         onClick={() => handleOpenPixModal(order)}
-                                                                        className="text-xs px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium mt-1"
+                                                                        className="text-xs px-3 py-1.5 bg-brand-orange text-white rounded font-bold hover:bg-brand-red transition-colors mt-1 uppercase tracking-wider shadow-sm"
                                                                     >
-                                                                        Pagar Agora / Ver Pix
+                                                                        Pagar Agora
                                                                     </button>
                                                                 )}
                                                             </div>
                                                         )}
                                                         {(order.status === 'canceled' || order.status === 'failed') && (
-                                                            <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">Cancelado</span>
+                                                            <span className="px-3 py-1 bg-brand-red/20 text-brand-orange border border-brand-orange/30 rounded-lg text-xs font-bold uppercase tracking-wider">Cancelado</span>
                                                         )}
                                                     </td>
-                                                    <td className="p-4 text-right font-bold text-gray-900">
+                                                    <td className="p-4 text-right font-black text-white tracking-widest">
                                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_amount)}
                                                     </td>
                                                 </tr>
@@ -395,25 +434,25 @@ export function MyAccountPage() {
                 ) : (
                     <div className="max-w-3xl space-y-8">
                         {/* Acesso Form */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Acesso e Segurança</h2>
+                        <div className="bg-black rounded-2xl shadow-lg border border-brand-red/20 p-8">
+                            <h2 className="text-2xl font-black font-heading uppercase italic tracking-widest text-white mb-6">Acesso e Segurança</h2>
                             <form onSubmit={handleSaveEmail} className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Email de Login</label>
+                                    <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-2">Email de Login</label>
                                     <input
                                         type="email"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-3 bg-brand-dark border border-brand-red/20 text-white rounded-xl focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
                                         required
                                     />
-                                    <p className="text-xs text-gray-500 mt-2">Nós enviaremos uma confirmação para seu novo email se ele for alterado antes de efetivar a mudança.</p>
+                                    <p className="text-xs text-brand-orange/80 mt-2 font-medium">Nós enviaremos uma confirmação para seu novo email se ele for alterado antes de efetivar a mudança.</p>
                                 </div>
 
                                 <button
                                     type="submit"
                                     disabled={savingEmail}
-                                    className="px-6 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed text-sm w-fit"
+                                    className="px-6 py-3 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase tracking-widest text-sm hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed w-fit"
                                 >
                                     {savingEmail ? (
                                         <>
@@ -430,15 +469,65 @@ export function MyAccountPage() {
                             </form>
                         </div>
 
+                        {/* Senha Form */}
+                        <div className="bg-black rounded-2xl shadow-lg border border-brand-red/20 p-8">
+                            <h2 className="text-2xl font-black font-heading uppercase italic tracking-widest text-white mb-6">Alterar Senha</h2>
+                            <form onSubmit={handleSavePassword} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-2">Nova Senha</label>
+                                    <input
+                                        type="password"
+                                        className="w-full px-4 py-3 bg-brand-dark border border-brand-red/20 text-white rounded-xl focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                        placeholder="Min. 6 caracteres"
+                                        minLength={6}
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-2">Confirmar Nova Senha</label>
+                                    <input
+                                        type="password"
+                                        className="w-full px-4 py-3 bg-brand-dark border border-brand-red/20 text-white rounded-xl focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
+                                        value={confirmPassword}
+                                        onChange={e => setConfirmPassword(e.target.value)}
+                                        placeholder="Confirme a nova senha"
+                                        minLength={6}
+                                        required
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={savingPassword || !password || !confirmPassword || password !== confirmPassword}
+                                    className="px-6 py-3 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase tracking-widest text-sm hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed w-fit"
+                                >
+                                    {savingPassword ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Atualizando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="w-4 h-4" />
+                                            Atualizar Senha
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                        </div>
+
                         {/* Dados Pessoais Form */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Dados Pessoais</h2>
+                        <div className="bg-black rounded-2xl shadow-lg border border-brand-red/20 p-8">
+                            <h2 className="text-2xl font-black font-heading uppercase italic tracking-widest text-white mb-6">Dados Pessoais</h2>
                             <form onSubmit={handleSaveProfile} className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Nome Completo</label>
+                                    <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-2">Nome Completo</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-3 bg-brand-dark border border-brand-red/20 text-white rounded-xl focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                         value={profile.full_name}
                                         onChange={e => setProfile({ ...profile, full_name: e.target.value })}
                                         required
@@ -446,10 +535,10 @@ export function MyAccountPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">WhatsApp</label>
+                                    <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-2">WhatsApp</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-3 bg-brand-dark border border-brand-red/20 text-white rounded-xl focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                         value={profile.whatsapp}
                                         placeholder="(11) 99999-9999"
                                         onChange={e => setProfile({ ...profile, whatsapp: e.target.value })}
@@ -457,21 +546,21 @@ export function MyAccountPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">CPF</label>
+                                    <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-2">CPF</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-3 bg-brand-dark border border-brand-red/20 text-white rounded-xl focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                         value={profile.cpf}
                                         placeholder="000.000.000-00"
                                         onChange={e => setProfile({ ...profile, cpf: e.target.value })}
                                     />
-                                    <p className="text-xs text-gray-500 mt-2">O CPF é necessário para emissão de comprovantes pelos gateways de pagamento.</p>
+                                    <p className="text-xs text-brand-orange/80 mt-2 font-medium">O CPF é necessário para emissão de comprovantes pelos gateways de pagamento.</p>
                                 </div>
 
                                 <button
                                     type="submit"
                                     disabled={savingProfile}
-                                    className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
+                                    className="px-8 py-3.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
                                 >
                                     {savingProfile ? (
                                         <>

@@ -18,7 +18,7 @@ export function EventDetailsPage() {
         }
     }, [slug]);
 
-    const loadEvent = async (slug: string) => {
+    async function loadEvent(slug: string) {
         setLoading(true);
         const eventData = await EventService.getBySlug(slug);
         setEvent(eventData);
@@ -51,34 +51,34 @@ export function EventDetailsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-12">
+        <div className="min-h-screen bg-brand-dark pb-12 font-sans text-gray-100">
             {/* Hero / Banner */}
-            <div className="relative h-[40vh] bg-gray-900">
+            <div className="relative h-[40vh] bg-black border-b border-brand-red/30">
                 <img
                     src={event.banner_url || 'https://via.placeholder.com/1920x600?text=Evento+Sem+Banner'}
                     alt={event.title}
                     loading="lazy"
-                    className="w-full h-full object-cover opacity-60"
+                    className="w-full h-full object-cover opacity-50 mix-blend-overlay"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/50 to-transparent" />
 
                 <div className="absolute bottom-0 left-0 right-0 p-8">
                     <div className="max-w-7xl mx-auto">
-                        <Link to="/" className="inline-flex items-center text-white/80 hover:text-white mb-6 transition-colors">
+                        <Link to="/" className="inline-flex items-center text-brand-orange hover:text-brand-red mb-6 transition-colors font-bold uppercase tracking-wider text-sm">
                             <ArrowLeft className="w-5 h-5 mr-2" />
                             Voltar
                         </Link>
-                        <h1 className="text-4xl font-bold font-display uppercase tracking-wider mb-4 leading-tight">
+                        <h1 className="text-4xl md:text-5xl font-black font-heading uppercase italic tracking-wider mb-4 leading-tight text-white drop-shadow-md">
                             {event.title}
                         </h1>
-                        <div className="flex flex-wrap items-center gap-6 text-gray-200">
+                        <div className="flex flex-wrap items-center gap-6 text-gray-300 font-medium uppercase tracking-wider">
                             <div className="flex items-center gap-2">
-                                <Calendar className="w-5 h-5 text-red-500" />
+                                <Calendar className="w-5 h-5 text-brand-red" />
                                 <span className="text-lg">{new Date(event.fight_date + 'T12:00:00').toLocaleDateString()}</span>
                             </div>
                             {event.location && (
                                 <div className="flex items-center">
-                                    <MapPin className="w-5 h-5 mr-2 text-blue-400" />
+                                    <MapPin className="w-5 h-5 mr-2 text-brand-orange" />
                                     <span className="text-lg">{event.location}</span>
                                 </div>
                             )}
@@ -89,16 +89,16 @@ export function EventDetailsPage() {
 
             {/* Fights List */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
+                <h2 className="text-3xl font-black font-heading uppercase italic tracking-widest text-white mb-8 flex items-center">
                     Card de Lutas
-                    <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
+                    <span className="ml-4 px-3 py-1 bg-brand-red/20 border border-brand-red/30 text-brand-orange text-sm font-bold font-sans tracking-widest rounded uppercase">
                         {videos.length} Lutas
                     </span>
                 </h2>
 
                 {videos.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                        <p className="text-gray-500 text-lg">Nenhuma luta cadastrada para este evento ainda.</p>
+                    <div className="text-center py-12 bg-black rounded-2xl border border-brand-red/20 shadow-lg">
+                        <p className="text-gray-400 text-lg font-heading uppercase tracking-widest">Nenhuma luta cadastrada para este evento ainda.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">

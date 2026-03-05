@@ -25,7 +25,7 @@ export function AdminEventsPage() {
         loadEvents();
     }, []);
 
-    const loadEvents = async () => {
+    async function loadEvents() {
         setLoading(true);
         const data = await EventService.getAll();
         setEvents(data);
@@ -36,7 +36,7 @@ export function AdminEventsPage() {
         e.preventDefault();
         try {
             const slug = newEvent.title?.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-            let eventData = { ...newEvent, slug };
+            const eventData = { ...newEvent, slug };
 
             if (selectedImageFile) {
                 const webpFile = await compressImageToWebp(selectedImageFile);

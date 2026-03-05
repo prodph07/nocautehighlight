@@ -13,7 +13,7 @@ export function AdminSettingsPage() {
         loadSettings();
     }, []);
 
-    const loadSettings = async () => {
+    async function loadSettings() {
         setLoading(true);
         const data = await SettingsService.getSettings();
         setSettings(data);

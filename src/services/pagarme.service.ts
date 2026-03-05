@@ -56,7 +56,7 @@ export const PagarmeService = {
                 try {
                     const errorJson = JSON.parse(responseText);
                     errorMessage = errorJson.error || errorMessage;
-                } catch (e) {
+                } catch {
                     errorMessage = responseText || errorMessage;
                 }
                 throw new Error(errorMessage);
@@ -71,7 +71,7 @@ export const PagarmeService = {
 
             return data;
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Erro no Fetch:', error);
             throw error;
         }

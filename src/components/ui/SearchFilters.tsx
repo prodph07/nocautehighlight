@@ -26,15 +26,15 @@ export function SearchFilters({ onSearch }: SearchFiltersProps) {
     };
 
     return (
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8">
+        <div className="bg-black p-4 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] border border-brand-red/20 mb-8 font-sans">
             <div className="flex flex-col md:flex-row gap-4 items-center">
                 <div className="relative flex-grow w-full">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-gray-400" />
+                        <Search className="h-5 w-5 text-gray-500" />
                     </div>
                     <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                        className="block w-full pl-10 pr-3 py-3 border border-brand-red/20 rounded-lg leading-5 bg-brand-dark text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-brand-orange sm:text-sm transition-all"
                         placeholder="Buscar por atleta, evento ou equipe..."
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
@@ -44,7 +44,7 @@ export function SearchFilters({ onSearch }: SearchFiltersProps) {
 
                 <button
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="md:hidden flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    className="md:hidden flex items-center px-4 py-3 border border-brand-red/20 rounded-lg text-sm font-bold font-heading uppercase tracking-wider text-gray-300 bg-brand-dark hover:bg-brand-dark/80 transition-colors w-full justify-center"
                 >
                     <Filter className="h-4 w-4 mr-2" />
                     Filtros
@@ -54,7 +54,7 @@ export function SearchFilters({ onSearch }: SearchFiltersProps) {
                     <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
+                        className="block w-full pl-3 pr-10 py-3 text-base border-brand-red/20 bg-brand-dark text-white focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-brand-orange sm:text-sm rounded-lg font-medium"
                     >
                         <option value="">Todas Categorias</option>
                         <option value="Pesos Pesados">Pesos Pesados</option>
@@ -65,7 +65,7 @@ export function SearchFilters({ onSearch }: SearchFiltersProps) {
                     <select
                         value={modality}
                         onChange={(e) => setModality(e.target.value)}
-                        className="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
+                        className="block w-full pl-3 pr-10 py-3 text-base border-brand-red/20 bg-brand-dark text-white focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-brand-orange sm:text-sm rounded-lg font-medium"
                     >
                         <option value="">Todas Modalidades</option>
                         <option value="MMA">MMA</option>
@@ -75,7 +75,7 @@ export function SearchFilters({ onSearch }: SearchFiltersProps) {
 
                     <button
                         onClick={handleSearch}
-                        className="w-full md:w-auto px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-brand-red to-brand-orange text-white font-black font-heading uppercase italic tracking-widest rounded-lg hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all transform hover:-translate-y-0.5"
                     >
                         Buscar
                     </button>
