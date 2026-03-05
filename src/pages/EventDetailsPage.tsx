@@ -62,16 +62,16 @@ export function EventDetailsPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/50 to-transparent" />
 
-                <div className="absolute bottom-0 left-0 right-0 p-8">
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
                     <div className="max-w-7xl mx-auto">
                         <Link to="/" className="inline-flex items-center text-brand-orange hover:text-brand-red mb-6 transition-colors font-bold uppercase tracking-wider text-sm">
                             <ArrowLeft className="w-5 h-5 mr-2" />
                             Voltar
                         </Link>
-                        <h1 className="text-4xl md:text-5xl font-black font-heading uppercase italic tracking-wider mb-4 leading-tight text-white drop-shadow-md">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-heading uppercase italic tracking-wider mb-4 leading-tight text-white drop-shadow-md">
                             {event.title}
                         </h1>
-                        <div className="flex flex-wrap items-center gap-6 text-gray-300 font-medium uppercase tracking-wider">
+                        <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-gray-300 font-medium uppercase tracking-wider">
                             <div className="flex items-center gap-2">
                                 <Calendar className="w-5 h-5 text-brand-red" />
                                 <span className="text-lg">{new Date(event.fight_date + 'T12:00:00').toLocaleDateString()}</span>
@@ -89,9 +89,9 @@ export function EventDetailsPage() {
 
             {/* Fights List */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
-                <h2 className="text-3xl font-black font-heading uppercase italic tracking-widest text-white mb-8 flex items-center">
+                <h2 className="text-2xl sm:text-3xl font-black font-heading uppercase italic tracking-widest text-white mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0">
                     Card de Lutas
-                    <span className="ml-4 px-3 py-1 bg-brand-red/20 border border-brand-red/30 text-brand-orange text-sm font-bold font-sans tracking-widest rounded uppercase">
+                    <span className="sm:ml-4 px-3 py-1 bg-brand-red/20 border border-brand-red/30 text-brand-orange text-sm font-bold font-sans tracking-widest rounded uppercase">
                         {videos.length} Lutas
                     </span>
                 </h2>

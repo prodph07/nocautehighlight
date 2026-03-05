@@ -238,7 +238,7 @@ export function MyAccountPage() {
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-grow w-full">
                 <div className="flex justify-between items-center mb-8 border-b border-brand-red/30 pb-6">
-                    <h1 className="text-3xl lg:text-4xl font-black font-heading uppercase italic tracking-wider text-white">Minha Conta</h1>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black font-heading uppercase italic tracking-wider text-white">Minha Conta</h1>
                     <button
                         onClick={handleLogout}
                         className="flex items-center text-gray-400 hover:text-brand-red transition-colors font-bold uppercase tracking-wide"
@@ -434,8 +434,8 @@ export function MyAccountPage() {
                 ) : (
                     <div className="max-w-3xl space-y-8">
                         {/* Acesso Form */}
-                        <div className="bg-black rounded-2xl shadow-lg border border-brand-red/20 p-8">
-                            <h2 className="text-2xl font-black font-heading uppercase italic tracking-widest text-white mb-6">Acesso e Segurança</h2>
+                        <div className="bg-black rounded-2xl shadow-lg border border-brand-red/20 p-5 sm:p-8">
+                            <h2 className="text-xl sm:text-2xl font-black font-heading uppercase italic tracking-widest text-white mb-6">Acesso e Segurança</h2>
                             <form onSubmit={handleSaveEmail} className="space-y-6">
                                 <div>
                                     <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-2">Email de Login</label>
@@ -470,8 +470,8 @@ export function MyAccountPage() {
                         </div>
 
                         {/* Senha Form */}
-                        <div className="bg-black rounded-2xl shadow-lg border border-brand-red/20 p-8">
-                            <h2 className="text-2xl font-black font-heading uppercase italic tracking-widest text-white mb-6">Alterar Senha</h2>
+                        <div className="bg-black rounded-2xl shadow-lg border border-brand-red/20 p-5 sm:p-8">
+                            <h2 className="text-xl sm:text-2xl font-black font-heading uppercase italic tracking-widest text-white mb-6">Alterar Senha</h2>
                             <form onSubmit={handleSavePassword} className="space-y-6">
                                 <div>
                                     <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-2">Nova Senha</label>
@@ -520,8 +520,8 @@ export function MyAccountPage() {
                         </div>
 
                         {/* Dados Pessoais Form */}
-                        <div className="bg-black rounded-2xl shadow-lg border border-brand-red/20 p-8">
-                            <h2 className="text-2xl font-black font-heading uppercase italic tracking-widest text-white mb-6">Dados Pessoais</h2>
+                        <div className="bg-black rounded-2xl shadow-lg border border-brand-red/20 p-5 sm:p-8">
+                            <h2 className="text-xl sm:text-2xl font-black font-heading uppercase italic tracking-widest text-white mb-6">Dados Pessoais</h2>
                             <form onSubmit={handleSaveProfile} className="space-y-6">
                                 <div>
                                     <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-2">Nome Completo</label>

@@ -97,8 +97,8 @@ export function VideoDetailsPage() {
                         </span>
                     </div>
 
-                    <h1 className="text-4xl md:text-6xl font-black font-heading uppercase italic tracking-wider text-white mb-2 drop-shadow-md">{video.title}</h1>
-                    <p className="text-xl text-brand-orange font-bold uppercase tracking-widest mb-8">{video.event_name}</p>
+                    <h1 className="text-3xl sm:text-4xl md:text-6xl font-black font-heading uppercase italic tracking-wider text-white mb-2 drop-shadow-md">{video.title}</h1>
+                    <p className="text-lg sm:text-xl text-brand-orange font-bold uppercase tracking-widest mb-8">{video.event_name}</p>
 
                     <div className="flex flex-wrap items-center gap-6 text-gray-300 font-medium uppercase tracking-wider text-sm">
                         <div className="flex items-center">
@@ -117,9 +117,9 @@ export function VideoDetailsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-8">
-                        <div className="bg-black/60 border border-brand-red/20 rounded-2xl p-8 shadow-xl backdrop-blur-sm">
-                            <h2 className="text-3xl font-black font-heading uppercase italic tracking-wider text-white mb-6 flex items-center">
-                                <span className="w-2 h-8 bg-brand-orange mr-3 rounded-full"></span>
+                        <div className="bg-black/60 border border-brand-red/20 rounded-2xl p-4 sm:p-8 shadow-xl backdrop-blur-sm">
+                            <h2 className="text-2xl sm:text-3xl font-black font-heading uppercase italic tracking-wider text-white mb-6 flex items-center">
+                                <span className="w-2 h-6 sm:h-8 bg-brand-orange mr-3 rounded-full"></span>
                                 Sobre a Luta
                             </h2>
                             <p className="text-gray-300 leading-relaxed text-lg">
@@ -141,11 +141,11 @@ export function VideoDetailsPage() {
 
                     {/* Sidebar / Checkout CTA */}
                     <div className="lg:col-span-1">
-                        <div className="bg-black/80 rounded-2xl p-8 shadow-2xl shadow-brand-red/10 border border-brand-red/30 sticky top-24 backdrop-blur-md">
+                        <div className="bg-black/80 rounded-2xl p-4 sm:p-8 shadow-2xl shadow-brand-red/10 border border-brand-red/30 sticky top-24 backdrop-blur-md">
                             <div className="text-center mb-8 pb-6 border-b border-gray-800">
                                 <span className="text-brand-orange text-sm uppercase tracking-widest font-black font-heading">Highlight do Evento</span>
                                 <div className="flex justify-center items-baseline gap-1 mt-3">
-                                    <span className="text-5xl font-black font-heading italic text-white drop-shadow-lg">
+                                    <span className="text-4xl sm:text-5xl font-black font-heading italic text-white drop-shadow-lg">
                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(video.price_highlight)}
                                     </span>
                                 </div>
@@ -153,7 +153,7 @@ export function VideoDetailsPage() {
 
                             <button
                                 onClick={handleBuyClick}
-                                className="w-full py-4 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase italic tracking-widest text-xl hover:shadow-[0_0_30px_rgba(220,38,38,0.5)] transition-all transform hover:-translate-y-1"
+                                className="w-full py-3 sm:py-4 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase italic tracking-widest text-lg sm:text-xl hover:shadow-[0_0_30px_rgba(220,38,38,0.5)] transition-all transform hover:-translate-y-1"
                             >
                                 Quero Comprar Agora
                             </button>

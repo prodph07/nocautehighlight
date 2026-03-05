@@ -88,40 +88,40 @@ export function LeadCaptureModal({ isOpen, onClose, onSuccess }: LeadCaptureModa
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative animate-fade-in">
+            <div className="bg-black border border-brand-red/30 rounded-2xl shadow-[0_0_40px_rgba(220,38,38,0.15)] w-full max-w-md overflow-hidden relative animate-fade-in">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute top-4 right-4 text-brand-orange hover:text-brand-red transition-colors p-1.5 bg-brand-dark/50 rounded-full"
                 >
                     <X className="w-6 h-6" />
                 </button>
 
-                <div className="p-8">
-                    <div className="text-center mb-6">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Lock className="w-6 h-6 text-blue-600" />
+                <div className="p-6 sm:p-8">
+                    <div className="text-center mb-8 pt-4">
+                        <div className="w-12 h-12 bg-brand-red/10 border border-brand-red/30 rounded-full flex items-center justify-center mx-auto mb-4 shadow-[0_0_15px_rgba(220,38,38,0.2)]">
+                            <Lock className="w-6 h-6 text-brand-orange" />
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900">Identifique-se</h2>
-                        <p className="text-gray-500 mt-2">
+                        <h2 className="text-2xl sm:text-3xl font-black font-heading uppercase italic tracking-widest text-white">Identifique-se</h2>
+                        <p className="text-gray-400 mt-2 font-medium">
                             Para prosseguir com a compra segura, precisamos de alguns dados seus.
                         </p>
                     </div>
 
                     {error && (
-                        <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-100">
+                        <div className="mb-4 p-3 bg-brand-red/10 text-brand-red text-sm font-bold rounded-lg border border-brand-red/30 flex items-center justify-center text-center">
                             {error}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                            <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-1.5">Nome Completo</label>
                             <div className="relative">
-                                <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                <User className="absolute left-3 top-3 h-5 w-5 text-gray-500" />
                                 <input
                                     type="text"
                                     required
-                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-brand-dark border border-brand-red/20 text-white rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                     placeholder="Seu nome"
                                     value={formData.fullName}
                                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
@@ -130,13 +130,13 @@ export function LeadCaptureModal({ isOpen, onClose, onSuccess }: LeadCaptureModa
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                            <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-1.5">E-mail</label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-500" />
                                 <input
                                     type="email"
                                     required
-                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-brand-dark border border-brand-red/20 text-white rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                     placeholder="seu@email.com"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -145,13 +145,13 @@ export function LeadCaptureModal({ isOpen, onClose, onSuccess }: LeadCaptureModa
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
+                            <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-1.5">WhatsApp</label>
                             <div className="relative">
-                                <Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                <Phone className="absolute left-3 top-3 h-5 w-5 text-gray-500" />
                                 <input
                                     type="tel"
                                     required
-                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-brand-dark border border-brand-red/20 text-white rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                     placeholder="(11) 99999-9999"
                                     value={formData.whatsapp}
                                     onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
@@ -160,14 +160,14 @@ export function LeadCaptureModal({ isOpen, onClose, onSuccess }: LeadCaptureModa
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Senha (para acesso futuro)</label>
+                            <label className="block text-sm font-bold font-heading uppercase tracking-wider text-gray-300 mb-1.5">Senha (para acesso futuro)</label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-500" />
                                 <input
                                     type="password"
                                     required
                                     minLength={6}
-                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-brand-dark border border-brand-red/20 text-white rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                     placeholder="******"
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -178,7 +178,7 @@ export function LeadCaptureModal({ isOpen, onClose, onSuccess }: LeadCaptureModa
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3 bg-blue-600 text-white rounded-lg font-bold text-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full py-3.5 mt-2 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-lg font-black font-heading uppercase italic tracking-widest text-lg hover:shadow-[0_0_20px_rgba(220,38,38,0.4)] transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none"
                         >
                             {loading ? (
                                 <>
@@ -191,7 +191,7 @@ export function LeadCaptureModal({ isOpen, onClose, onSuccess }: LeadCaptureModa
                         </button>
                     </form>
 
-                    <p className="mt-4 text-xs text-center text-gray-400">
+                    <p className="mt-6 text-xs text-center text-gray-500 font-medium tracking-wide">
                         Seus dados estão seguros e serão utilizados apenas para processar sua compra e enviar o acesso ao vídeo.
                     </p>
                 </div>

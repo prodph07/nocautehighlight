@@ -37,14 +37,14 @@ export function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/50 via-brand-dark/80 to-brand-dark"></div>
 
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 text-center">
-                    <h1 className="text-5xl md:text-7xl font-black font-heading italic tracking-tighter text-white mb-6 uppercase">
+                    <h1 className="text-4xl sm:text-5xl md:text-7xl font-black font-heading italic tracking-tighter text-white mb-6 uppercase">
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-red to-brand-orange drop-shadow-lg">
                             HIGH NOCAUTE
                         </span>
                         <br />
                         <span className="text-gray-100 drop-shadow-md">ON DEMAND</span>
                     </h1>
-                    <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-light">
+                    <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-light px-2">
                         Adquira os melhores highlights de eventos de luta do Brasil. Muay Thai, Kickboxing e Boxe em alta qualidade.
                     </p>
 
@@ -66,11 +66,11 @@ export function HomePage() {
 
             {/* Events List */}
             <main className="flex-grow container mx-auto px-4 py-16 max-w-7xl">
-                <div className="flex items-center mb-10">
-                    <div className="p-3 bg-brand-red/10 border border-brand-red/30 rounded-xl mr-4 shadow-[0_0_15px_rgba(220,38,38,0.2)]">
+                <div className="flex flex-col sm:flex-row items-center sm:justify-start mb-10 text-center sm:text-left">
+                    <div className="p-3 bg-brand-red/10 border border-brand-red/30 rounded-xl mb-4 sm:mb-0 sm:mr-4 shadow-[0_0_15px_rgba(220,38,38,0.2)]">
                         <Zap className="w-6 h-6 text-brand-orange" />
                     </div>
-                    <h2 className="text-3xl font-black font-heading uppercase tracking-wide text-white">Eventos Disponíveis</h2>
+                    <h2 className="text-2xl sm:text-3xl font-black font-heading uppercase tracking-wide text-white">Eventos Disponíveis</h2>
                 </div>
 
                 {loading ? (

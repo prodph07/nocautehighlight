@@ -40,9 +40,9 @@ export function LoginPage() {
                     <ArrowLeft className="w-6 h-6" />
                 </Link>
 
-                <div className="p-8">
+                <div className="p-6 sm:p-8">
                     <div className="text-center mb-8 pt-4">
-                        <h1 className="text-3xl font-black font-heading uppercase italic tracking-widest text-white">Bem-vindo de volta!</h1>
+                        <h1 className="text-2xl sm:text-3xl font-black font-heading uppercase italic tracking-widest text-white">Bem-vindo de volta!</h1>
                         <p className="text-gray-400 mt-2 font-medium">Acesse sua conta para ver seus vídeos.</p>
                     </div>
 

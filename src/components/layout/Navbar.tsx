@@ -46,17 +46,19 @@ export function Navbar() {
                                 <Link
                                     to="/ajuda"
                                     className="flex items-center text-gray-300 hover:text-brand-orange font-medium transition-colors"
+                                    title="Ajuda"
                                 >
-                                    <HelpCircle className="w-5 h-5 mr-2" />
-                                    Ajuda
+                                    <HelpCircle className="w-5 h-5 sm:mr-2" />
+                                    <span className="hidden sm:inline">Ajuda</span>
                                 </Link>
 
                                 <Link
                                     to="/minha-conta"
                                     className="flex items-center text-gray-300 hover:text-brand-orange font-medium transition-colors"
+                                    title="Minha Conta"
                                 >
-                                    <User className="w-5 h-5 mr-2" />
-                                    Minha Conta
+                                    <User className="w-5 h-5 sm:mr-2" />
+                                    <span className="hidden sm:inline">Minha Conta</span>
                                 </Link>
 
                                 <button
@@ -75,7 +77,7 @@ export function Navbar() {
                                 <Link to="/login" className="text-gray-300 hover:text-white font-medium text-sm sm:text-base transition-colors">
                                     Login
                                 </Link>
-                                <Link to="/signup" className="px-5 py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-lg font-bold uppercase tracking-wider text-sm hover:shadow-lg hover:shadow-brand-red/30 transition-all font-heading">
+                                <Link to="/signup" className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-lg font-bold uppercase tracking-wider text-xs sm:text-sm hover:shadow-lg hover:shadow-brand-red/30 transition-all font-heading text-center">
                                     Cadastrar
                                 </Link>
                             </>
