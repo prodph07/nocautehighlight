@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { type Event } from '../../types';
 import { EventService } from '../../services/event.service';
-import { Plus, Trash2, Calendar, MapPin, Loader2, Edit, FolderOpen } from 'lucide-react';
+import { Plus, Trash2, Calendar, MapPin, Loader2, Edit, FolderOpen, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { compressImageToWebp } from '../../utils/imageUtils';
 
 export function AdminEventsPage() {
     const [events, setEvents] = useState<Event[]>([]);
@@ -17,6 +18,8 @@ export function AdminEventsPage() {
         is_active: true
     });
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     useEffect(() => {
         loadEvents();
@@ -33,7 +36,33 @@ export function AdminEventsPage() {
         e.preventDefault();
         try {
             const slug = newEvent.title?.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-            const eventData = { ...newEvent, slug };
+            let eventData = { ...newEvent, slug };
+
+            if (selectedImageFile) {
+                const webpFile = await compressImageToWebp(selectedImageFile);
+
+                // Upload to Supabase Storage
+                const fileName = `${Date.now()}_${slug || 'event'}.webp`;
+                const { error: uploadError } = await supabase.storage
+                    .from('banners')
+                    .upload(fileName, webpFile, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+
+                if (uploadError) {
+                    console.error('Error uploading image:', uploadError);
+                    alert('Erro ao fazer upload da imagem. O evento não foi salvo.');
+                    return;
+                }
+
+                // Get Public URL
+                const { data: publicUrlData } = supabase.storage
+                    .from('banners')
+                    .getPublicUrl(fileName);
+
+                eventData.banner_url = publicUrlData.publicUrl;
+            }
 
             let success = false;
             if (editingId) {
@@ -56,6 +85,15 @@ export function AdminEventsPage() {
         }
     };
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedImageFile(file);
+            const objectUrl = URL.createObjectURL(file);
+            setImagePreview(objectUrl);
+        }
+    };
+
     const handleEditClick = (event: Event) => {
         setNewEvent({
             title: event.title,
@@ -66,6 +104,8 @@ export function AdminEventsPage() {
             is_active: event.is_active
         });
         setEditingId(event.id);
+        setSelectedImageFile(null);
+        setImagePreview(event.banner_url || null);
         setIsModalOpen(true);
     };
 
@@ -80,6 +120,8 @@ export function AdminEventsPage() {
             drive_link: '',
             is_active: true
         });
+        setSelectedImageFile(null);
+        setImagePreview(null);
     };
 
     const handleDeleteEvent = async (id: string, title: string) => {
@@ -246,14 +288,32 @@ export function AdminEventsPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Banner URL</label>
-                                <input
-                                    type="url"
-                                    className="w-full mt-1 p-2 border rounded-lg"
-                                    placeholder="https://..."
-                                    value={newEvent.banner_url}
-                                    onChange={e => setNewEvent({ ...newEvent, banner_url: e.target.value })}
-                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Banner do Evento</label>
+
+                                <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col items-center">
+                                    {(imagePreview || newEvent.banner_url) && (
+                                        <div className="mb-4 w-full">
+                                            <img
+                                                src={imagePreview || newEvent.banner_url}
+                                                alt="Preview"
+                                                className="w-full h-32 object-cover rounded-md border border-gray-200"
+                                            />
+                                        </div>
+                                    )}
+                                    <label className="flex items-center justify-center w-full px-4 py-2 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                        <ImageIcon className="w-5 h-5 mr-2 text-gray-500" />
+                                        <span className="text-gray-700 text-sm">{imagePreview ? 'Trocar Imagem' : 'Selecionar Imagem do PC'}</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleImageChange}
+                                        />
+                                    </label>
+                                    <p className="text-xs text-gray-500 mt-2 text-center">
+                                        A imagem será otimizada (WebP) magicamente antes do envio.
+                                    </p>
+                                </div>
                             </div>
 
                             <div>

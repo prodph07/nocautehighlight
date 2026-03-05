@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { EventService } from '../services/event.service';
 import { type Event } from '../types';
@@ -101,7 +102,8 @@ export function HomePage() {
             <footer className="bg-white border-t border-gray-100 py-12 mt-auto">
                 <div className="max-w-7xl mx-auto px-4 text-center text-gray-500">
                     <p className="font-medium text-gray-900 mb-2">High Nocaute</p>
-                    <p className="text-sm">© {new Date().getFullYear()} Todos os direitos reservados.</p>
+                    <p className="text-sm mb-4">© {new Date().getFullYear()} Todos os direitos reservados.</p>
+                    <Link to="/termos" className="text-sm text-blue-600 hover:underline">Termos de Serviço e Política de Reembolso</Link>
                 </div>
             </footer>
         </div>

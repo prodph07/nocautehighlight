@@ -9,6 +9,7 @@ const EventDetailsPage = lazy(() => import('./pages/EventDetailsPage').then(modu
 const PaymentPage = lazy(() => import('./pages/PaymentPage').then(module => ({ default: module.PaymentPage })));
 const MyAccountPage = lazy(() => import('./pages/MyAccountPage').then(module => ({ default: module.MyAccountPage })));
 const HelpPage = lazy(() => import('./pages/HelpPage').then(module => ({ default: module.HelpPage })));
+const TermsPage = lazy(() => import('./pages/TermsPage').then(module => ({ default: module.TermsPage })));
 
 const AdminLayout = lazy(() => import('./components/layout/AdminLayout').then(module => ({ default: module.AdminLayout })));
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then(module => ({ default: module.AdminDashboardPage })));
@@ -40,6 +41,7 @@ function App() {
           <Route path="/checkout" element={<PaymentPage />} />
           <Route path="/minha-conta" element={<MyAccountPage />} />
           <Route path="/ajuda" element={<HelpPage />} />
+          <Route path="/termos" element={<TermsPage />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
