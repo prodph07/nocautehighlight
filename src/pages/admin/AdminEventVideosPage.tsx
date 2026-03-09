@@ -281,17 +281,17 @@ export function AdminEventVideosPage() {
     return (
         <div>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/admin/events')}
-                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2.5 text-gray-400 bg-brand-dark hover:text-white border border-brand-red/20 hover:border-brand-orange rounded-xl transition-colors shadow-sm"
                         title="Voltar para Eventos"
                     >
                         <ArrowLeft className="w-6 h-6" />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Card de Lutas</h1>
-                        <p className="text-sm text-gray-500">{currentEvent ? currentEvent.title : 'Carregando...'}</p>
+                        <h1 className="text-3xl font-black font-heading uppercase italic tracking-widest text-white">Card de <span className="text-brand-orange">Lutas</span></h1>
+                        <p className="text-sm font-bold uppercase tracking-wider text-brand-red">{currentEvent ? currentEvent.title : 'Carregando...'}</p>
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
@@ -305,24 +305,24 @@ export function AdminEventVideosPage() {
                     <button
                         onClick={() => setIsPasteModalOpen(true)}
                         disabled={importing}
-                        className="flex items-center px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 font-medium"
+                        className="flex items-center px-5 py-2.5 bg-brand-dark border border-brand-red/20 text-gray-300 rounded-xl hover:text-white hover:border-brand-orange transition-colors disabled:opacity-50 font-bold uppercase tracking-wider text-xs"
                     >
                         {importing ? (
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            <Loader2 className="w-5 h-5 mr-3 animate-spin text-brand-orange" />
                         ) : (
-                            <FileText className="w-5 h-5 mr-2" />
+                            <FileText className="w-5 h-5 mr-3 text-brand-orange" />
                         )}
                         Colar CSV
                     </button>
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={importing}
-                        className="flex items-center px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 font-medium"
+                        className="flex items-center px-5 py-2.5 bg-brand-dark border border-brand-red/20 text-gray-300 rounded-xl hover:text-white hover:border-brand-orange transition-colors disabled:opacity-50 font-bold uppercase tracking-wider text-xs"
                     >
                         {importing ? (
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            <Loader2 className="w-5 h-5 mr-3 animate-spin text-brand-orange" />
                         ) : (
-                            <Upload className="w-5 h-5 mr-2" />
+                            <Upload className="w-5 h-5 mr-3 text-brand-orange" />
                         )}
                         Importar CSV
                     </button>
@@ -342,7 +342,7 @@ export function AdminEventVideosPage() {
                             });
                             setIsModalOpen(true);
                         }}
-                        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        className="flex items-center px-6 py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all font-black font-heading uppercase tracking-widest text-sm"
                     >
                         <Plus className="w-5 h-5 mr-2" />
                         Nova Luta
@@ -350,49 +350,49 @@ export function AdminEventVideosPage() {
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-black rounded-2xl shadow-[0_0_15px_rgba(220,38,38,0.1)] border border-brand-red/20 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse whitespace-nowrap">
                         <thead>
-                        <tr className="bg-gray-50 border-b border-gray-100">
-                            <th className="p-4 font-semibold text-gray-600 text-sm">Luta</th>
-                            <th className="p-4 font-semibold text-gray-600 text-sm">Evento</th>
-                            <th className="p-4 font-semibold text-gray-600 text-sm">Modalidade</th>
-                            <th className="p-4 font-semibold text-gray-600 text-sm">Preço</th>
-                            <th className="p-4 font-semibold text-gray-600 text-sm">Status</th>
-                            <th className="p-4 font-semibold text-gray-600 text-sm text-right">Ações</th>
+                        <tr className="bg-brand-dark border-b border-brand-red/20">
+                            <th className="p-4 font-bold uppercase tracking-wider text-gray-400 text-xs">Luta</th>
+                            <th className="p-4 font-bold uppercase tracking-wider text-gray-400 text-xs">Evento</th>
+                            <th className="p-4 font-bold uppercase tracking-wider text-gray-400 text-xs">Modalidade</th>
+                            <th className="p-4 font-bold uppercase tracking-wider text-gray-400 text-xs">Preço</th>
+                            <th className="p-4 font-bold uppercase tracking-wider text-gray-400 text-xs">Status</th>
+                            <th className="p-4 font-bold uppercase tracking-wider text-gray-400 text-xs text-right">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center text-gray-500">
-                                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                                <td colSpan={6} className="p-8 text-center text-gray-500 font-bold uppercase tracking-widest italic">
+                                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-brand-orange" />
                                     Carregando vídeos...
                                 </td>
                             </tr>
                         ) : videos.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center text-gray-500">Nenhum vídeo encontrado.</td>
+                                <td colSpan={6} className="p-8 text-center text-gray-500 font-bold uppercase tracking-widest italic">Nenhum vídeo encontrado.</td>
                             </tr>
                         ) : (
                             videos.map(video => (
-                                <tr key={video.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                                <tr key={video.id} className="border-b border-brand-red/10 hover:bg-brand-dark/50 transition-colors">
                                     <td className="p-4">
-                                        <div className="font-medium text-gray-900">{video.title}</div>
-                                        <div className="text-xs text-gray-400">ID: {video.id.substring(0, 8)}...</div>
+                                        <div className="font-black font-heading uppercase tracking-widest text-white">{video.title}</div>
+                                        <div className="text-xs text-brand-orange font-mono mt-1 w-fit bg-brand-orange/10 px-2 py-0.5 rounded border border-brand-orange/20">ID: #{video.id.substring(0, 8)}</div>
                                     </td>
-                                    <td className="p-4 text-gray-600">{video.event_name}</td>
+                                    <td className="p-4 text-gray-300 font-medium">{video.event_name}</td>
                                     <td className="p-4">
-                                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs px-2">
+                                        <span className="px-3 py-1 bg-brand-dark border border-gray-700 text-gray-300 rounded-lg text-xs font-bold uppercase tracking-wider">
                                             {video.category}
                                         </span>
                                     </td>
-                                    <td className="p-4 text-gray-900 font-medium">
+                                    <td className="p-4 text-white font-black">
                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(video.price_highlight)}
                                     </td>
                                     <td className="p-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${video.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${video.is_active ? 'bg-green-900/40 text-green-400 border-green-500/30' : 'bg-red-900/40 text-red-500 border-red-500/30'}`}>
                                             {video.is_active ? 'Ativo' : 'Inativo'}
                                         </span>
                                     </td>
@@ -400,7 +400,7 @@ export function AdminEventVideosPage() {
                                         <div className="flex justify-end gap-2">
                                             <button
                                                 onClick={() => handleEditClick(video)}
-                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                className="p-2 bg-black text-gray-400 hover:text-blue-400 hover:border-blue-500/50 border border-gray-700 rounded-lg transition-colors"
                                                 title="Editar"
                                             >
                                                 <Edit className="w-4 h-4" />
@@ -408,7 +408,7 @@ export function AdminEventVideosPage() {
                                             {video.is_active ? (
                                                 <button
                                                     onClick={() => handleDeleteVideo(video.id, video.title)}
-                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    className="p-2 bg-black text-gray-400 hover:text-red-500 hover:border-red-500/50 border border-gray-700 rounded-lg transition-colors"
                                                     title="Deletar/Inativar"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
@@ -416,7 +416,7 @@ export function AdminEventVideosPage() {
                                             ) : (
                                                 <button
                                                     onClick={() => handleActivateVideo(video.id, video.title)}
-                                                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                    className="p-2 bg-black text-gray-400 hover:text-green-400 hover:border-green-500/50 border border-gray-700 rounded-lg transition-colors"
                                                     title="Ativar"
                                                 >
                                                     <CheckCircle className="w-4 h-4" />
@@ -433,15 +433,20 @@ export function AdminEventVideosPage() {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-xl p-6 w-full max-w-lg overflow-y-auto max-h-[90vh]">
-                        <h2 className="text-xl font-bold mb-4">{editingId ? 'Editar Luta' : 'Adicionar Nova Luta'}</h2>
-                        <form onSubmit={handleSaveVideo} className="space-y-4">
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                    <div className="bg-black border border-brand-red/20 shadow-[0_0_30px_rgba(220,38,38,0.2)] rounded-2xl p-8 w-full max-w-lg overflow-y-auto max-h-[90vh] relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-brand-orange/5 to-transparent rounded-bl-full pointer-events-none"></div>
+                        
+                        <h2 className="text-2xl font-black font-heading uppercase italic tracking-widest text-white mb-6 border-b border-brand-red/20 pb-4 relative z-10">
+                            {editingId ? 'Editar Luta' : 'Adicionar Nova Luta'}
+                        </h2>
+                        
+                        <form onSubmit={handleSaveVideo} className="space-y-5 relative z-10">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Título da Luta</label>
+                                <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">Título da Luta</label>
                                 <input
                                     type="text"
-                                    className="w-full mt-1 p-2 border rounded-lg"
+                                    className="w-full p-3 bg-brand-dark border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                     placeholder="Ex: Fulano vs Ciclano"
                                     value={newVideo.title}
                                     onChange={e => setNewVideo({ ...newVideo, title: e.target.value })}
@@ -449,22 +454,22 @@ export function AdminEventVideosPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Preço (R$)</label>
+                                    <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">Preço (R$)</label>
                                     <input
                                         type="number"
                                         step="0.01"
-                                        className="w-full mt-1 p-2 border rounded-lg"
+                                        className="w-full p-3 bg-brand-dark border border-gray-700 rounded-xl text-white font-bold focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all"
                                         value={newVideo.price_highlight}
                                         onChange={e => setNewVideo({ ...newVideo, price_highlight: Number(e.target.value) })}
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Categoria/Modalidade</label>
+                                    <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">Categoria/Modalidade</label>
                                     <select
-                                        className="w-full mt-1 p-2 border rounded-lg"
+                                        className="w-full p-3 bg-brand-dark border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all"
                                         value={newVideo.category}
                                         onChange={e => setNewVideo({ ...newVideo, category: e.target.value })}
                                     >
@@ -477,32 +482,32 @@ export function AdminEventVideosPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">URL da Imagem (Thumbnail)</label>
+                                <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">URL da Imagem (Thumbnail)</label>
                                 <input
                                     type="url"
-                                    className="w-full mt-1 p-2 border rounded-lg"
+                                    className="w-full p-3 bg-brand-dark border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                     placeholder="https://..."
                                     value={newVideo.teaser_url}
                                     onChange={e => setNewVideo({ ...newVideo, teaser_url: e.target.value })}
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">ID Drive (Highlight)</label>
+                                    <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">ID Drive (Highlight)</label>
                                     <input
                                         type="text"
-                                        className="w-full mt-1 p-2 border rounded-lg"
+                                        className="w-full p-3 bg-brand-dark border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                         placeholder="Ex: 1s2f3g..."
                                         value={newVideo.highlight_id}
                                         onChange={e => setNewVideo({ ...newVideo, highlight_id: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">ID Drive (Luta Completa)</label>
+                                    <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">ID Drive (Luta Completa)</label>
                                     <input
                                         type="text"
-                                        className="w-full mt-1 p-2 border rounded-lg"
+                                        className="w-full p-3 bg-brand-dark border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
                                         placeholder="Ex: 4h5j6k..."
                                         value={newVideo.full_fight_id}
                                         onChange={e => setNewVideo({ ...newVideo, full_fight_id: e.target.value })}
@@ -510,19 +515,19 @@ export function AdminEventVideosPage() {
                                 </div>
                             </div>
 
-                            <div className="flex justify-end gap-3 mt-6">
+                            <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-brand-red/20">
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                    className="px-6 py-2.5 bg-black text-gray-400 border border-gray-800 hover:text-white hover:border-gray-500 rounded-xl font-bold uppercase tracking-wider text-sm transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                    className="px-6 py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase tracking-widest text-sm hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all"
                                 >
-                                    Salvar Vídeo
+                                    Salvar Luta
                                 </button>
                             </div>
                         </form>
@@ -530,36 +535,39 @@ export function AdminEventVideosPage() {
                 </div>
             )}
             {isPasteModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-xl p-6 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
-                        <h2 className="text-xl font-bold mb-4">Colar Dados CSV</h2>
-                        <p className="text-sm text-gray-500 mb-4">
-                            Cole o conteúdo do CSV (com cabeçalhos na primeira linha) na caixa de texto abaixo. Apenas a coluna <code className="bg-gray-100 rounded px-1">title</code> é obrigatória.
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                    <div className="bg-black border border-brand-red/20 shadow-[0_0_30px_rgba(220,38,38,0.2)] rounded-2xl p-8 w-full max-w-2xl overflow-y-auto max-h-[90vh] relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-brand-orange/5 to-transparent rounded-bl-full pointer-events-none"></div>
+
+                        <h2 className="text-2xl font-black font-heading uppercase italic tracking-widest text-white mb-2 relative z-10">Colar Dados CSV</h2>
+                        <p className="text-sm font-medium text-gray-400 mb-6 italic border-b border-brand-red/20 pb-4 relative z-10">
+                            * Cole o conteúdo do CSV (com cabeçalhos na primeira linha) na caixa de texto abaixo. Apenas a coluna <code className="bg-brand-orange/10 text-brand-orange px-1.5 py-0.5 rounded border border-brand-orange/20">title</code> é obrigatória.
                         </p>
-                        <form onSubmit={handlePasteSubmit} className="space-y-4">
+                        
+                        <form onSubmit={handlePasteSubmit} className="space-y-4 relative z-10">
                             <textarea
-                                className="w-full h-64 p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none font-mono text-sm"
+                                className="w-full h-64 p-4 bg-brand-dark border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all font-mono text-sm placeholder:text-gray-600"
                                 placeholder="title, category, price_highlight&#10;Luta 1, Muay Thai, 29.90&#10;Luta 2, Boxe, 39.90"
                                 value={csvText}
                                 onChange={(e) => setCsvText(e.target.value)}
                                 required
                             />
 
-                            <div className="flex justify-end gap-3 mt-6">
+                            <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-brand-red/20">
                                 <button
                                     type="button"
                                     onClick={() => setIsPasteModalOpen(false)}
-                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                    className="px-6 py-2.5 bg-black text-gray-400 border border-gray-800 hover:text-white hover:border-gray-500 rounded-xl font-bold uppercase tracking-wider text-sm transition-colors"
                                     disabled={importing}
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-75 flex items-center justify-center gap-2"
+                                    className="px-6 py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase tracking-widest text-sm hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                     disabled={importing}
                                 >
-                                    {importing && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    {importing && <Loader2 className="w-5 h-5 animate-spin" />}
                                     Importar Dados
                                 </button>
                             </div>
