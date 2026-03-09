@@ -137,7 +137,7 @@ export function AdminEventsPage() {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <h1 className="text-2xl font-bold text-gray-900">Gerenciar Eventos</h1>
                 <button
                     onClick={() => {
@@ -152,8 +152,9 @@ export function AdminEventsPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
                         <tr className="bg-gray-50 border-b border-gray-100">
                             <th className="p-4 font-semibold text-gray-600 text-sm">Evento</th>
                             <th className="p-4 font-semibold text-gray-600 text-sm">Data</th>
@@ -245,6 +246,7 @@ export function AdminEventsPage() {
                         )}
                     </tbody>
                 </table>
+                </div>
             </div>
 
             {isModalOpen && (
@@ -264,7 +266,7 @@ export function AdminEventsPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Data</label>
                                     <input

@@ -150,8 +150,8 @@ export function AdminOrdersPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 justify-between bg-gray-50/50">
-                    <div className="flex gap-2 p-1 bg-gray-100 rounded-lg self-start">
+                <div className="p-4 border-b border-gray-100 flex flex-col items-start lg:flex-row gap-4 justify-between bg-gray-50/50">
+                    <div className="flex flex-wrap gap-2 p-1 bg-gray-100 rounded-lg self-start">
                         <button
                             onClick={() => setStatusFilter('all')}
                             className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${statusFilter === 'all' ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}
@@ -178,7 +178,7 @@ export function AdminOrdersPage() {
                         </button>
                     </div>
 
-                    <div className="relative relative max-w-md w-full">
+                    <div className="relative max-w-xl w-full mt-2 lg:mt-0">
                         <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                             type="text"

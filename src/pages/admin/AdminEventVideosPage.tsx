@@ -280,8 +280,8 @@ export function AdminEventVideosPage() {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={() => navigate('/admin/events')}
                         className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
@@ -294,7 +294,7 @@ export function AdminEventVideosPage() {
                         <p className="text-sm text-gray-500">{currentEvent ? currentEvent.title : 'Carregando...'}</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     <input
                         type="file"
                         accept=".csv"
@@ -351,8 +351,9 @@ export function AdminEventVideosPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
                         <tr className="bg-gray-50 border-b border-gray-100">
                             <th className="p-4 font-semibold text-gray-600 text-sm">Luta</th>
                             <th className="p-4 font-semibold text-gray-600 text-sm">Evento</th>
@@ -428,6 +429,7 @@ export function AdminEventVideosPage() {
                         )}
                     </tbody>
                 </table>
+                </div>
             </div>
 
             {isModalOpen && (
@@ -447,7 +449,7 @@ export function AdminEventVideosPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Preço (R$)</label>
                                     <input
@@ -485,7 +487,7 @@ export function AdminEventVideosPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">ID Drive (Highlight)</label>
                                     <input

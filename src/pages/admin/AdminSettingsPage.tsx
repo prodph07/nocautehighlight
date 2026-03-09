@@ -89,7 +89,7 @@ export function AdminSettingsPage() {
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex items-center px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                            className="w-full sm:w-auto flex items-center justify-center px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                         >
                             {saving ? (
                                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />

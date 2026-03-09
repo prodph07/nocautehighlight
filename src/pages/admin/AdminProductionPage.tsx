@@ -25,9 +25,9 @@ export function AdminProductionPage() {
                 .select(`
                     *,
                     videos ( title, event_id, event_name ),
-                    orders ( id, created_at, status )
+                    orders!inner ( id, created_at, status )
                 `)
-                .in('production_status', ['in_production', 'delivered'])
+                .eq('orders.status', 'paid')
                 .order('id', { ascending: false })
         ]);
 
@@ -41,7 +41,7 @@ export function AdminProductionPage() {
             const sorted = prodRes.data.sort((a, b) => {
                 const dateA = new Date(a.orders?.created_at || 0).getTime();
                 const dateB = new Date(b.orders?.created_at || 0).getTime();
-                return dateB - dateA;
+                return dateA - dateB; // ASC: Mais antigos primeiro
             });
             setProductions(sorted);
 
@@ -128,8 +128,8 @@ export function AdminProductionPage() {
                 acc[eventId] = { eventId, eventTitle, pending: [], delivered: [] };
             }
 
-            if (item.production_status === 'in_production') acc[eventId].pending.push(item);
-            else if (item.production_status === 'delivered') acc[eventId].delivered.push(item);
+            if (item.production_status === 'delivered') acc[eventId].delivered.push(item);
+            else acc[eventId].pending.push(item);
 
             return acc;
         }, {} as Record<string, GroupedEvent>)
@@ -137,7 +137,7 @@ export function AdminProductionPage() {
 
     return (
         <div className="max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Fila de Produção</h1>
                     <p className="text-gray-500 mt-1">Gerencie os pedidos de highlight separados por evento.</p>
@@ -165,19 +165,19 @@ export function AdminProductionPage() {
                             <div key={group.eventId} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all">
                                 {/* Accordion Header */}
                                 <div
-                                    className="p-6 cursor-pointer hover:bg-gray-50 flex items-center justify-between"
+                                    className="p-4 sm:p-6 cursor-pointer hover:bg-gray-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                                     onClick={() => toggleEvent(group.eventId)}
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                                            <Video className="w-6 h-6" />
+                                    <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                                        <div className="p-3 bg-blue-50 text-blue-600 rounded-xl shrink-0">
+                                            <Video className="w-5 h-5 sm:w-6 sm:h-6" />
                                         </div>
-                                        <div>
-                                            <h2 className="text-xl font-bold text-gray-900">{group.eventTitle}</h2>
-                                            <p className="text-sm text-gray-500">Total de pedidos: {total}</p>
+                                        <div className="min-w-0">
+                                            <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{group.eventTitle}</h2>
+                                            <p className="text-xs sm:text-sm text-gray-500">Total de pedidos: {total}</p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-3">
+                                    <div className="flex flex-wrap gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                                         {group.pending.length > 0 && (
                                             <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
                                                 {group.pending.length} Pendentes
@@ -198,22 +198,39 @@ export function AdminProductionPage() {
                                             <div>
                                                 <h3 className="text-lg font-bold text-gray-800 mb-4">Aguardando Edição</h3>
                                                 <div className="space-y-6">
-                                                    {group.pending.map(item => {
+                                                    {group.pending.map((item, index) => {
                                                         const formData = item.production_form_data || {};
                                                         return (
                                                             <div key={item.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                                                                <div className="flex justify-between items-start mb-6">
+                                                                <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-3">
                                                                     <div>
-                                                                        <h4 className="text-lg font-bold text-gray-900">
-                                                                            Highlight: {formData.fighterName || 'Atleta Não Informado'}
-                                                                        </h4>
-                                                                        <p className="text-sm text-gray-500 mt-1">
-                                                                            Luta: {item.videos?.title} • Pedido: {item.order_id?.substring(0, 8).toUpperCase()}
-                                                                        </p>
+                                                                        <div className="flex items-center gap-3">
+                                                                            <span className="flex items-center justify-center bg-brand-orange text-white font-black text-sm w-8 h-8 rounded-full shadow-md">
+                                                                                {index + 1}º
+                                                                            </span>
+                                                                            <h4 className="text-lg font-bold text-gray-900">
+                                                                                Highlight: {formData.fighterName || 'Aguardando Formulário'}
+                                                                            </h4>
+                                                                        </div>
+                                                                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                                            {(!item.production_status || item.production_status === 'pending_form') ? (
+                                                                                <span className="px-2.5 py-0.5 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full text-xs font-bold uppercase tracking-wider">
+                                                                                    Faltam Dados
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 border border-blue-200 rounded-full text-xs font-bold uppercase tracking-wider">
+                                                                                    Em Edição
+                                                                                </span>
+                                                                            )}
+                                                                            <p className="text-sm text-gray-500">
+                                                                                Luta: {item.videos?.title} <br className="sm:hidden" />
+                                                                                <span className="hidden sm:inline">• </span>Pedido: {item.order_id?.substring(0, 8).toUpperCase()}
+                                                                            </p>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="text-right text-sm text-gray-500">
-                                                                        Data do Pedido: <br />
-                                                                        {item.orders?.created_at ? new Date(item.orders.created_at).toLocaleDateString('pt-BR') : 'N/A'}
+                                                                    <div className="text-left sm:text-right text-sm text-gray-500">
+                                                                        Data do Pedido: <br className="hidden sm:inline" />
+                                                                        {item.orders?.created_at ? new Date(item.orders.created_at).toLocaleDateString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                                                                     </div>
                                                                 </div>
 
@@ -252,18 +269,18 @@ export function AdminProductionPage() {
                                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                                                         Link do Vídeo Finalizado (Google Drive, Vimeo, YouTube)
                                                                     </label>
-                                                                    <div className="flex gap-4">
+                                                                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                                                                         <input
                                                                             type="url"
                                                                             placeholder="https://..."
                                                                             value={deliveryUrls[item.id] || ''}
                                                                             onChange={(e) => handleUrlChange(item.id, e.target.value)}
-                                                                            className="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                                                                            className="flex-grow w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-green-600"
                                                                         />
                                                                         <button
                                                                             onClick={() => handleDeliver(item.id)}
                                                                             disabled={updatingId === item.id || !deliveryUrls[item.id]}
-                                                                            className="px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                                                                            className="w-full sm:w-auto justify-center px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 shrink-0"
                                                                         >
                                                                             {updatingId === item.id ? (
                                                                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -294,12 +311,12 @@ export function AdminProductionPage() {
 
                                                         return (
                                                             <div key={item.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm transition-all text-sm">
-                                                                <div className="flex items-center justify-between">
+                                                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                                                     <div>
                                                                         <h4 className="font-bold text-gray-900 text-base">{formData.fighterName || 'Atleta'}</h4>
                                                                         <p className="text-sm text-gray-500">{item.videos?.title}</p>
                                                                     </div>
-                                                                    <div className="flex gap-2">
+                                                                    <div className="flex flex-wrap gap-2">
                                                                         <button
                                                                             onClick={() => setEditingDelivered(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
                                                                             className="px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium border border-transparent hover:border-blue-100"
@@ -356,18 +373,18 @@ export function AdminProductionPage() {
                                                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                                                 Atualizar Link do Vídeo Finalizado
                                                                             </label>
-                                                                            <div className="flex gap-4">
+                                                                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                                                                                 <input
                                                                                     type="url"
                                                                                     placeholder="https://..."
                                                                                     value={deliveryUrls[item.id] || ''}
                                                                                     onChange={(e) => handleUrlChange(item.id, e.target.value)}
-                                                                                    className="flex-grow px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50/30"
+                                                                                    className="flex-grow w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 bg-blue-50/30"
                                                                                 />
                                                                                 <button
                                                                                     onClick={() => handleDeliver(item.id)}
                                                                                     disabled={updatingId === item.id || !deliveryUrls[item.id]}
-                                                                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                                                                                    className="w-full justify-center sm:w-auto sm:justify-start px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 shrink-0"
                                                                                 >
                                                                                     {updatingId === item.id ? (
                                                                                         <Loader2 className="w-4 h-4 animate-spin" />
