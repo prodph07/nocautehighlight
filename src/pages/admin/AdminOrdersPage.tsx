@@ -30,6 +30,8 @@ export function AdminOrdersPage() {
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
         loadOrders();
@@ -65,11 +67,11 @@ export function AdminOrdersPage() {
 
     const getStatusStyle = (status: string) => {
         switch (status) {
-            case 'paid': return 'bg-green-100 text-green-700 border-green-200';
-            case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+            case 'paid': return 'bg-green-900/40 text-green-400 border-green-500/30';
+            case 'pending': return 'bg-yellow-900/40 text-yellow-400 border-yellow-500/30';
             case 'canceled':
-            case 'failed': return 'bg-red-100 text-red-700 border-red-200';
-            default: return 'bg-gray-100 text-gray-700 border-gray-200';
+            case 'failed': return 'bg-brand-red/20 text-brand-orange border-brand-orange/30';
+            default: return 'bg-gray-800 text-gray-300 border-gray-700';
         }
     };
 
@@ -95,6 +97,15 @@ export function AdminOrdersPage() {
 
         return matchesStatus && matchesSearch;
     });
+
+    const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+
+    // Reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [statusFilter, searchTerm, itemsPerPage]);
 
     const exportToCsv = () => {
         if (filteredOrders.length === 0) return;
@@ -133,127 +144,142 @@ export function AdminOrdersPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Package className="w-6 h-6 text-blue-600" />
+                    <h1 className="text-2xl font-black font-heading uppercase italic tracking-widest text-white flex items-center gap-3">
+                        <Package className="w-8 h-8 text-brand-orange" />
                         Gerenciamento de Pedidos
                     </h1>
-                    <p className="text-gray-500 text-sm mt-1">Veja todos os pedidos, status de pagamentos e dados dos clientes.</p>
+                    <p className="text-gray-400 text-sm mt-1">Veja todos os pedidos, status de pagamentos e dados dos clientes.</p>
                 </div>
 
                 <button
                     onClick={exportToCsv}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition"
+                    className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-lg font-black font-heading uppercase tracking-widest text-sm hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all w-full md:w-auto"
                 >
                     <Download className="w-4 h-4" />
-                    Exportar
+                    Exportar CSV
                 </button>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex flex-col items-start lg:flex-row gap-4 justify-between bg-gray-50/50">
-                    <div className="flex flex-wrap gap-2 p-1 bg-gray-100 rounded-lg self-start">
+            <div className="bg-black rounded-2xl shadow-lg border border-brand-red/20 overflow-hidden">
+                <div className="p-4 border-b border-brand-red/20 flex flex-col lg:flex-row gap-4 justify-between bg-brand-dark/50">
+                    <div className="flex flex-wrap gap-2 self-start">
                         <button
                             onClick={() => setStatusFilter('all')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${statusFilter === 'all' ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}
+                            className={`px-4 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider transition-colors border ${statusFilter === 'all' ? 'bg-brand-red/20 text-brand-orange border-brand-orange/30' : 'bg-transparent text-gray-400 border-gray-700 hover:text-white hover:border-gray-500'}`}
                         >
                             Todos
                         </button>
                         <button
                             onClick={() => setStatusFilter('paid')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition flex items-center gap-1 ${statusFilter === 'paid' ? 'bg-white shadow text-green-700' : 'text-gray-600 hover:text-gray-900'}`}
+                            className={`px-4 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-1 border ${statusFilter === 'paid' ? 'bg-green-900/40 text-green-400 border-green-500/30' : 'bg-transparent text-gray-400 border-gray-700 hover:text-white hover:border-gray-500'}`}
                         >
                             <CheckCircle className="w-4 h-4" /> Aprovados
                         </button>
                         <button
                             onClick={() => setStatusFilter('pending')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition flex items-center gap-1 ${statusFilter === 'pending' ? 'bg-white shadow text-yellow-700' : 'text-gray-600 hover:text-gray-900'}`}
+                            className={`px-4 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-1 border ${statusFilter === 'pending' ? 'bg-yellow-900/40 text-yellow-400 border-yellow-500/30' : 'bg-transparent text-gray-400 border-gray-700 hover:text-white hover:border-gray-500'}`}
                         >
                             <Clock className="w-4 h-4" /> Pendentes
                         </button>
                         <button
                             onClick={() => setStatusFilter('failed')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition flex items-center gap-1 ${statusFilter === 'failed' ? 'bg-white shadow text-red-700' : 'text-gray-600 hover:text-gray-900'}`}
+                            className={`px-4 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider transition-colors flex items-center gap-1 border ${statusFilter === 'failed' ? 'bg-brand-red/20 text-brand-orange border-brand-orange/30' : 'bg-transparent text-gray-400 border-gray-700 hover:text-white hover:border-gray-500'}`}
                         >
                             <XCircle className="w-4 h-4" /> Falhos
                         </button>
                     </div>
 
-                    <div className="relative max-w-xl w-full mt-2 lg:mt-0">
-                        <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                            type="text"
-                            placeholder="Buscar por nome, email, CPF ou ID do pedido..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                        <div className="flex items-center gap-2 self-start sm:self-auto w-full sm:w-auto">
+                            <span className="text-gray-400 text-sm font-bold uppercase font-heading">Ver:</span>
+                            <select
+                                value={itemsPerPage}
+                                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                                className="bg-brand-dark border border-brand-red/20 text-white text-sm rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-brand-orange outline-none cursor-pointer"
+                            >
+                                <option value={10}>10</option>
+                                <option value={15}>15</option>
+                                <option value={20}>20</option>
+                            </select>
+                        </div>
+                        
+                        <div className="relative w-full sm:w-64 lg:w-80">
+                            <Search className="w-5 h-5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                                type="text"
+                                placeholder="Buscar (nome, email, pacote)..."
+                                className="w-full pl-10 pr-4 py-2 bg-brand-dark border border-brand-red/20 text-white rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-all placeholder:text-gray-600"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[1000px]">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 uppercase text-xs font-semibold text-gray-500 tracking-wider">
-                                <th className="p-4 w-24">ID</th>
-                                <th className="p-4">Cliente</th>
-                                <th className="p-4">Item Comprado</th>
-                                <th className="p-4">Data</th>
-                                <th className="p-4">Pagamento</th>
-                                <th className="p-4 text-right">Valor</th>
-                                <th className="p-4 text-center">Status</th>
+                            <tr className="bg-brand-dark border-b border-brand-red/30">
+                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs w-24">ID</th>
+                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs">Cliente</th>
+                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs">Item Comprado</th>
+                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs">Data</th>
+                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs">Pagamento</th>
+                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs text-right">Valor</th>
+                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs text-center">Status</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
+                        <tbody>
                             {loading ? (
-                                <tr><td colSpan={7} className="p-8 text-center text-gray-500">Carregando pedidos...</td></tr>
-                            ) : filteredOrders.length === 0 ? (
-                                <tr><td colSpan={7} className="p-8 text-center text-gray-500">Nenhum pedido encontrado.</td></tr>
+                                <tr><td colSpan={7} className="p-8 text-center text-gray-400 font-bold uppercase tracking-wider font-heading">Carregando pedidos...</td></tr>
+                            ) : paginatedOrders.length === 0 ? (
+                                <tr><td colSpan={7} className="p-8 text-center text-gray-400 font-bold uppercase tracking-wider font-heading">Nenhum pedido encontrado.</td></tr>
                             ) : (
-                                filteredOrders.map(order => {
+                                paginatedOrders.map(order => {
                                     const firstItem = order.order_items?.[0];
                                     const isFullAccess = firstItem?.access_level === 'full_access';
 
                                     return (
-                                        <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="p-4 text-xs font-mono text-gray-400">
-                                                {order.id.split('-')[0]}
+                                        <tr key={order.id} className="border-b border-brand-red/10 hover:bg-brand-dark/50 transition-colors">
+                                            <td className="p-4 text-xs font-mono text-brand-orange uppercase">
+                                                #{order.id.split('-')[0]}
                                             </td>
                                             <td className="p-4 text-sm">
-                                                <div className="font-medium text-gray-900">{order.profiles?.full_name || 'Usuário Deletado'}</div>
-                                                <div className="text-gray-500 text-xs">{order.profiles?.email}</div>
-                                                <div className="text-gray-400 text-xs mt-1">CPF: {order.profiles?.cpf || 'Não informado'}</div>
+                                                <div className="font-bold text-gray-200 uppercase tracking-wide font-heading">{order.profiles?.full_name || 'Usuário Deletado'}</div>
+                                                <div className="text-gray-400 text-xs font-medium">{order.profiles?.email}</div>
+                                                <div className="text-gray-500 text-xs mt-1">CPF: {order.profiles?.cpf || 'Não informado'}</div>
                                             </td>
                                             <td className="p-4">
                                                 {firstItem ? (
                                                     <div>
-                                                        <div className="font-medium text-gray-800 text-sm line-clamp-1" title={firstItem.videos.title}>
+                                                        <div className="font-bold font-heading text-white text-sm line-clamp-1 uppercase tracking-wider" title={firstItem.videos.title}>
                                                             {firstItem.videos.title}
                                                         </div>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-xs text-gray-500">{firstItem.videos.event_name}</span>
-                                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${isFullAccess ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                            <span className="text-xs text-brand-orange font-bold uppercase">{firstItem.videos.event_name}</span>
+                                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide border ${isFullAccess ? 'bg-purple-900/40 text-purple-400 border-purple-500/30' : 'bg-blue-900/40 text-blue-400 border-blue-500/30'}`}>
                                                                 {isFullAccess ? 'Luta Completa' : 'Highlight'}
                                                             </span>
                                                         </div>
                                                     </div>
-                                                ) : <span className="text-gray-400 text-sm">Sem item vinculado</span>}
+                                                ) : <span className="text-gray-500 text-sm italic">Sem item vinculado</span>}
                                             </td>
-                                            <td className="p-4 text-sm text-gray-600">
+                                            <td className="p-4 text-sm text-gray-300 font-medium">
                                                 <div className="flex items-center gap-2">
-                                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                                    <Calendar className="w-4 h-4 text-brand-red" />
                                                     {format(new Date(order.created_at), "dd MMM yy, HH:mm", { locale: ptBR })}
                                                 </div>
                                             </td>
                                             <td className="p-4">
-                                                <span className={`px-2 py-1 bg-gray-100 rounded text-xs font-semibold ${order.payment_method === 'pix' ? 'text-green-700' : 'text-blue-700'}`}>
+                                                <span className={`px-2 py-1 bg-brand-dark rounded text-xs font-bold border ${order.payment_method === 'pix' ? 'text-green-400 border-green-500/30' : 'text-blue-400 border-blue-500/30'}`}>
                                                     {order.payment_method === 'pix' ? 'PIX' : 'CARTÃO'}
                                                 </span>
                                             </td>
-                                            <td className="p-4 text-right font-medium text-gray-900">
+                                            <td className="p-4 text-right font-black text-white tracking-widest">
                                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_amount)}
                                             </td>
                                             <td className="p-4 text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusStyle(order.status)}`}>
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${getStatusStyle(order.status)}`}>
                                                     {getStatusLabel(order.status)}
                                                 </span>
                                             </td>
@@ -264,6 +290,53 @@ export function AdminOrdersPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="p-4 border-t border-brand-red/20 bg-brand-dark/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="text-sm text-gray-400 font-medium">
+                            Mostrando <span className="text-white font-bold">{startIndex + 1}</span> até <span className="text-white font-bold">{Math.min(startIndex + itemsPerPage, filteredOrders.length)}</span> de <span className="text-white font-bold">{filteredOrders.length}</span> pedidos
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 rounded-lg border border-brand-red/20 bg-brand-dark text-gray-300 font-bold text-sm hover:text-white hover:border-brand-orange disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Anterior
+                            </button>
+                            <div className="flex items-center gap-1">
+                                {Array.from({ length: totalPages }).map((_, i) => {
+                                    const page = i + 1;
+                                    // Make pagination compact if too many pages
+                                    if (totalPages > 5) {
+                                        if (page !== 1 && page !== totalPages && Math.abs(currentPage - page) > 1) {
+                                            if (page === 2 || page === totalPages - 1) return <span key={page} className="text-gray-500 px-1">...</span>;
+                                            return null;
+                                        }
+                                    }
+
+                                    return (
+                                        <button
+                                            key={page}
+                                            onClick={() => setCurrentPage(page)}
+                                            className={`w-8 h-8 rounded-lg text-sm font-bold flex items-center justify-center transition-colors ${currentPage === page ? 'bg-brand-orange text-white' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
+                                        >
+                                            {page}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 rounded-lg border border-brand-red/20 bg-brand-dark text-gray-300 font-bold text-sm hover:text-white hover:border-brand-orange disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Próxima
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
