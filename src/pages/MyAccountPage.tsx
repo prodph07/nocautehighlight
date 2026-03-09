@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Package, ExternalLink, Edit3, CheckCircle, Clock, Settings, Save, Loader2 } from 'lucide-react';
+import { LogOut, Package, ExternalLink, Edit3, CheckCircle, Clock, Settings, Save, Loader2, Info } from 'lucide-react';
 import { Navbar } from '../components/layout/Navbar';
 import { VideoService } from '../services/video.service';
 import { supabase } from '../lib/supabase';
@@ -271,6 +271,20 @@ export function MyAccountPage() {
                             <Edit3 className="w-6 h-6 mr-3 text-brand-orange" />
                             Minhas Edições e Highlights
                         </h2>
+
+                        <div className="bg-brand-orange/5 border border-brand-orange/30 p-5 rounded-2xl mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                            <div className="p-3 bg-brand-orange/20 rounded-xl text-brand-orange shrink-0">
+                                <Info className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-white font-black font-heading uppercase tracking-wider mb-1">Como funciona a entrega?</h3>
+                                <p className="text-sm text-gray-300 font-medium leading-relaxed">
+                                    Ao confirmar o pagamento, seu pedido entra em nossa fila. Você precisa <strong className="text-brand-orange font-bold uppercase text-xs">Preencher os Dados da Luta</strong> abaixo. 
+                                    Após o envio do formulário, o prazo de entrega da edição é de até <strong className="text-brand-orange font-black uppercase tracking-wider">7 dias úteis</strong>. 
+                                    O vídeo finalizado para download ficará disponível nesta mesma tela.
+                                </p>
+                            </div>
+                        </div>
 
                         {paidOrderItems.length === 0 ? (
                             <div className="text-center py-20 bg-black rounded-2xl border border-brand-red/20 shadow-sm mb-12">

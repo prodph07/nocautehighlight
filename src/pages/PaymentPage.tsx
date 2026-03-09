@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ShieldCheck, QrCode, Loader2, Lock } from 'lucide-react';
+import { ShieldCheck, QrCode, Loader2, Lock, Clock } from 'lucide-react';
 import { Navbar } from '../components/layout/Navbar';
 import { type PaymentMethod } from '../types';
 import { VideoService } from '../services/video.service';
@@ -343,6 +343,13 @@ export function PaymentPage() {
                                     <div className="w-2.5 h-2.5 rounded-full bg-brand-orange" />
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="bg-brand-orange/10 border border-brand-orange/30 p-4 rounded-xl mb-6 flex gap-3 items-start">
+                            <Clock className="w-5 h-5 text-brand-orange shrink-0 mt-0.5" />
+                            <p className="text-sm text-brand-orange/90 font-medium">
+                                <strong className="font-black text-brand-orange uppercase tracking-wider">Prazo de Entrega:</strong> O vídeo editado será entregue em até <strong className="font-black text-brand-orange uppercase">7 dias úteis</strong> após a confirmação do pagamento e envio do formulário no seu painel.
+                            </p>
                         </div>
 
                         <button
