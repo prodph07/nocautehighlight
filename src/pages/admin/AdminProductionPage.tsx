@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Video, CheckCircle, ExternalLink, RefreshCw, Send } from 'lucide-react';
+import { Loader2, Video, ExternalLink, RefreshCw, Send } from 'lucide-react';
 
 export function AdminProductionPage() {
     const [loading, setLoading] = useState(true);
