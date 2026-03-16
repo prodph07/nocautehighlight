@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Package, Search, Calendar, CheckCircle, Clock, XCircle, Download } from 'lucide-react';
+import { Package, Search, Calendar, CheckCircle, Clock, XCircle, Download, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -32,6 +32,7 @@ export function AdminOrdersPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
         loadOrders();
@@ -62,6 +63,40 @@ export function AdminOrdersPage() {
             console.error('Erro ao carregar pedidos:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteOrder = async (orderId: string) => {
+        if (!window.confirm('Tem certeza que deseja excluir permanentemente este pedido e o acesso associado a ele? Esta ação não pode ser desfeita.')) {
+            return;
+        }
+
+        setDeletingId(orderId);
+        try {
+            // Primeiro deleta os itens do pedido associado (foreign key)
+            const { error: itemsError } = await supabase
+                .from('order_items')
+                .delete()
+                .eq('order_id', orderId);
+
+            if (itemsError) throw itemsError;
+
+            // Depois deleta o pedido principal
+            const { error: orderError } = await supabase
+                .from('orders')
+                .delete()
+                .eq('id', orderId);
+
+            if (orderError) throw orderError;
+
+            // Atualiza a interface
+            setOrders(orders.filter(o => o.id !== orderId));
+            
+        } catch (error: any) {
+            console.error('Erro ao deletar pedido:', error);
+            alert(`Erro ao excluir pedido: ${error.message || 'Sem permissão.'}`);
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -227,6 +262,7 @@ export function AdminOrdersPage() {
                                 <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs">Pagamento</th>
                                 <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs text-right">Valor</th>
                                 <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs text-center">Status</th>
+                                <th className="p-4 font-black font-heading uppercase tracking-widest text-white text-xs text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -282,6 +318,16 @@ export function AdminOrdersPage() {
                                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${getStatusStyle(order.status)}`}>
                                                     {getStatusLabel(order.status)}
                                                 </span>
+                                            </td>
+                                            <td className="p-4 text-center">
+                                                <button
+                                                    onClick={() => handleDeleteOrder(order.id)}
+                                                    disabled={deletingId === order.id}
+                                                    title="Excluir Pedido"
+                                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                                >
+                                                    <Trash2 className="w-5 h-5 mx-auto" />
+                                                </button>
                                             </td>
                                         </tr>
                                     );

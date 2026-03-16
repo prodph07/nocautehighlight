@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Package, Calendar, Scissors, Settings, Menu, X } from 'lucide-react';
+import { LayoutDashboard, LogOut, Package, Calendar, Scissors, Settings, Menu, X, Ticket } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useState } from 'react';
 
@@ -80,6 +80,15 @@ export function AdminLayout() {
                     >
                         <Scissors className={`w-5 h-5 ${isActive('/admin/production') ? 'text-brand-orange' : ''}`} />
                         <span>Fila de Edição</span>
+                    </Link>
+
+                    <Link
+                        to="/admin/coupons"
+                        onClick={() => setIsSidebarOpen(false)}
+                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin/coupons') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
+                    >
+                        <Ticket className={`w-5 h-5 ${isActive('/admin/coupons') ? 'text-brand-orange' : ''}`} />
+                        <span>Cupons</span>
                     </Link>
 
                     <Link

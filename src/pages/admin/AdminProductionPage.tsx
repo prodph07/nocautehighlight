@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Video, ExternalLink, RefreshCw, Send } from 'lucide-react';
+import { Loader2, Video, ExternalLink, RefreshCw, Send, Plus, Search, X, ArrowUpDown } from 'lucide-react';
 
 export function AdminProductionPage() {
     const [loading, setLoading] = useState(true);
@@ -10,6 +10,20 @@ export function AdminProductionPage() {
     const [deliveryUrls, setDeliveryUrls] = useState<{ [key: string]: string }>({});
     const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
     const [editingDelivered, setEditingDelivered] = useState<Record<string, boolean>>({});
+
+    // Manual Addition States
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [allVideos, setAllVideos] = useState<any[]>([]);
+    
+    // Form fields for manual addition
+    const [manualVideoId, setManualVideoId] = useState('');
+    const [manualAccessLevel, setManualAccessLevel] = useState('full_access');
+    const [manualQueuePosition, setManualQueuePosition] = useState('');
+    const [isSubmittingManual, setIsSubmittingManual] = useState(false);
 
     useEffect(() => {
         loadProductions();
@@ -25,7 +39,13 @@ export function AdminProductionPage() {
                 .select(`
                     *,
                     videos ( title, event_id, event_name ),
-                    orders!inner ( id, created_at, status )
+                    orders!inner ( 
+                        id, 
+                        created_at, 
+                        status,
+                        user_id,
+                        profiles:user_id ( full_name, email, whatsapp )
+                    )
                 `)
                 .eq('orders.status', 'paid')
                 .order('id', { ascending: false })
@@ -36,6 +56,10 @@ export function AdminProductionPage() {
             eventsRes.data.forEach(e => map[e.id] = e.title);
             setEventsMap(map);
         }
+
+        // Fetch videos for the dropdown
+        const { data: videosData } = await supabase.from('videos').select('id, title, event_name').order('created_at', { ascending: false });
+        if (videosData) setAllVideos(videosData);
 
         if (!prodRes.error && prodRes.data) {
             const sorted = prodRes.data.sort((a, b) => {
@@ -104,6 +128,191 @@ export function AdminProductionPage() {
         setDeliveryUrls(prev => ({ ...prev, [itemId]: value }));
     };
 
+    // User Search Logic
+    useEffect(() => {
+        const searchUsers = async () => {
+            if (!searchTerm.trim()) {
+                setSearchResults([]);
+                return;
+            }
+
+            setIsSearchingUsers(true);
+            try {
+                // Search in profiles table by email
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('id, email, full_name')
+                    .ilike('email', `%${searchTerm.trim()}%`)
+                    .limit(5);
+
+                if (error) throw error;
+                setSearchResults(data || []);
+            } catch (err) {
+                console.error("Erro ao buscar usuários", err);
+            } finally {
+                setIsSearchingUsers(false);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            if (searchTerm !== selectedUser?.email) {
+                searchUsers();
+            }
+        }, 500); // 500ms debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, selectedUser]);
+
+    const handleSelectUser = (user: any) => {
+        setSelectedUser(user);
+        setSearchTerm(user.email);
+        setSearchResults([]);
+    };
+
+    // Reorder Logic
+    const handleReorder = async (originalItemId: string, orderIdToUpdate: string, currentPosition: number, totalPending: number, groupPending: any[]) => {
+        const newPosStr = window.prompt(`Qual a nova posição desejada para este item? (Atual: ${currentPosition + 1} de ${totalPending})`);
+        if (!newPosStr) return;
+        
+        const newPos = parseInt(newPosStr);
+        if (isNaN(newPos) || newPos <= 0 || newPos > totalPending) {
+            alert(`Posição inválida. Escolha um número entre 1 e ${totalPending}.`);
+            return;
+        }
+
+        if (newPos === currentPosition + 1) return; // Same position
+
+        try {
+            setUpdatingId(originalItemId);
+
+            let createdAtTarget = new Date().toISOString(); 
+            // We are reordering WITHIN the current Event's pending queue for simplicity and predictable UI
+            // The list is sorted by created_at ASC (oldest first).
+            // Index 0 is the oldest (1st in queue).
+            if (newPos === 1) {
+                // To be first, we must be older than the current first
+                const oldestDate = new Date(groupPending[0].orders.created_at);
+                oldestDate.setSeconds(oldestDate.getSeconds() - 1);
+                createdAtTarget = oldestDate.toISOString();
+            } else if (newPos === totalPending) {
+                // To be last, we just use the current date (now) or newer than the current last
+                createdAtTarget = new Date().toISOString();
+            } else {
+                // Moving to the middle
+                // Example: I want to be in position 3 (index 2).
+                // I need my created_at to be between the item currently at position 2 (index 1) 
+                // and the item currently at position 3 (index 2).
+                const upperDate = new Date(groupPending[newPos - 2].orders.created_at);
+                const lowerDate = new Date(groupPending[newPos - 1].orders.created_at);
+                
+                // Calculate the midpoint between the two dates
+                const midTime = (upperDate.getTime() + lowerDate.getTime()) / 2;
+                createdAtTarget = new Date(midTime).toISOString();
+            }
+
+            const { error: orderError } = await supabase
+                .from('orders')
+                .update({ created_at: createdAtTarget })
+                .eq('id', orderIdToUpdate);
+
+            if (orderError) throw orderError;
+
+            alert('Posição atualizada com sucesso!');
+            await loadProductions();
+        } catch (error: any) {
+            console.error('Erro ao reordenar:', error);
+            alert('Erro ao mudar posição: ' + error.message);
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    // Manual Creation Logic
+    const handleManualCreate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUser) {
+            alert('Por favor, selecione um usuário.');
+            return;
+        }
+        if (!manualVideoId) {
+            alert('Por favor, selecione uma luta/vídeo.');
+            return;
+        }
+
+        setIsSubmittingManual(true);
+        try {
+            // Determine the queue insertion date
+            let createdAtTarget = new Date().toISOString(); 
+            
+            if (manualQueuePosition) {
+                const pos = parseInt(manualQueuePosition);
+                if (!isNaN(pos) && pos > 0) {
+                    // Gather all pending across all events
+                    const allPending = productions.filter(p => p.production_status !== 'delivered');
+                    
+                    if (pos === 1 && allPending.length > 0) {
+                        // Place exactly 1 second before the oldest pending order
+                        const oldestDate = new Date(allPending[0].orders.created_at);
+                        oldestDate.setSeconds(oldestDate.getSeconds() - 1);
+                        createdAtTarget = oldestDate.toISOString();
+                    } else if (pos <= allPending.length) {
+                        // Place between pos-1 and pos by taking the date of the item currently at the desired position
+                        // and subtracting 1 second
+                        const targetItemDate = new Date(allPending[pos - 1].orders.created_at);
+                        targetItemDate.setSeconds(targetItemDate.getSeconds() - 1);
+                        createdAtTarget = targetItemDate.toISOString();
+                    }
+                }
+            }
+
+            // Create Order
+            const { data: orderData, error: orderError } = await supabase
+                .from('orders')
+                .insert({
+                    user_id: selectedUser.id,
+                    status: 'paid',
+                    gateway_id: `manual_admin_${new Date().getTime()}`,
+                    payment_method: 'pix', // arbitrary
+                    total_amount: 0,
+                    created_at: createdAtTarget
+                })
+                .select()
+                .single();
+
+            if (orderError) throw orderError;
+
+            // Create Order Item
+            const { error: itemError } = await supabase
+                .from('order_items')
+                .insert({
+                    order_id: orderData.id,
+                    video_id: manualVideoId,
+                    access_level: manualAccessLevel
+                });
+
+            if (itemError) {
+                throw itemError;
+            }
+
+            alert('Adicionado à fila de edição manualmente!');
+            setIsAddModalOpen(false);
+            
+            // Reset modal states
+            setSelectedUser(null);
+            setSearchTerm('');
+            setManualVideoId('');
+            setManualQueuePosition('');
+            
+            await loadProductions();
+        } catch (error: any) {
+            console.error('Erro ao adicionar manual:', error);
+            alert('Erro ao criar pedido manual: ' + error.message);
+        } finally {
+            setIsSubmittingManual(true); // Keep modal button locked briefly
+            setTimeout(() => setIsSubmittingManual(false), 500); 
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex h-64 items-center justify-center">
@@ -142,13 +351,22 @@ export function AdminProductionPage() {
                     <h1 className="text-3xl font-black font-heading uppercase italic tracking-widest text-white">Fila de <span className="text-brand-orange">Produção</span></h1>
                     <p className="text-gray-400 mt-1 font-medium">Gerencie os pedidos de highlight separados por evento.</p>
                 </div>
-                <button
-                    onClick={loadProductions}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-brand-dark border border-brand-red/20 rounded-xl text-gray-300 hover:text-white hover:border-brand-orange transition-colors font-bold uppercase tracking-wider text-sm"
-                >
-                    <RefreshCw className="w-4 h-4" />
-                    Atualizar Fila
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase tracking-widest text-sm hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all w-full sm:w-auto"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Adicionar Manualmente
+                    </button>
+                    <button
+                        onClick={loadProductions}
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-dark border border-brand-red/20 rounded-xl text-gray-300 hover:text-white hover:border-brand-orange transition-colors font-bold uppercase tracking-wider text-sm w-full sm:w-auto"
+                    >
+                        <RefreshCw className="w-4 h-4" />
+                        Atualizar
+                    </button>
+                </div>
             </div>
 
             {groupedProductions.length === 0 ? (
@@ -200,21 +418,37 @@ export function AdminProductionPage() {
                                                 <div className="space-y-6">
                                                     {group.pending.map((item, index) => {
                                                         const formData = item.production_form_data || {};
+                                                        const buyerProfile = item.orders?.profiles || {};
+
                                                         return (
                                                             <div key={item.id} className="bg-brand-dark p-6 rounded-2xl shadow-lg border border-brand-red/20 relative overflow-hidden">
                                                                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-brand-orange/5 to-transparent rounded-bl-full pointer-events-none"></div>
                                                                 
                                                                 <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-3 relative z-10">
-                                                                    <div>
-                                                                        <div className="flex items-center gap-3">
-                                                                            <span className="flex items-center justify-center bg-gradient-to-br from-brand-red to-brand-orange text-white font-black text-sm w-8 h-8 rounded-full shadow-[0_0_10px_rgba(220,38,38,0.5)]">
+                                                                    <div className="flex-1">
+                                                                        <div className="flex flex-wrap items-center gap-3">
+                                                                            <span className="flex items-center justify-center bg-gradient-to-br from-brand-red to-brand-orange text-white font-black text-sm w-9 h-9 rounded-full shadow-[0_0_10px_rgba(220,38,38,0.5)] shrink-0">
                                                                                 {index + 1}º
                                                                             </span>
-                                                                            <h4 className="text-lg font-black font-heading tracking-wider text-white uppercase">
-                                                                                Highlight: <span className="text-brand-orange">{formData.fighterName || 'Aguardando Formulário'}</span>
+                                                                            <h4 className="text-lg md:text-xl font-black font-heading tracking-wider text-white uppercase break-words line-clamp-2 pr-4">
+                                                                                Highlight <span className="text-brand-orange">{formData.fighterName || 'Aguard. Form'}</span>
                                                                             </h4>
                                                                         </div>
-                                                                        <div className="flex flex-wrap items-center gap-2 mt-3">
+                                                                        
+                                                                        {/* Dados Iniciais do Comprador (Antes mesmo do formulário) */}
+                                                                        <div className="mt-4 p-3 bg-black/50 border border-gray-800 rounded-lg inline-flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-400">
+                                                                            <p><strong className="text-gray-300">Comprador:</strong> {buyerProfile.full_name || 'Desconhecido'}</p>
+                                                                            <p className="hidden md:block text-gray-700">|</p>
+                                                                            <p><strong className="text-gray-300">Email:</strong> {buyerProfile.email || 'N/A'}</p>
+                                                                            {buyerProfile.whatsapp && (
+                                                                                <>
+                                                                                    <p className="hidden md:block text-gray-700">|</p>
+                                                                                    <p><strong className="text-gray-300">WhatsApp:</strong> {buyerProfile.whatsapp}</p>
+                                                                                </>
+                                                                            )}
+                                                                        </div>
+
+                                                                        <div className="flex flex-wrap items-center gap-2 mt-4 text-sm font-medium">
                                                                             {(!item.production_status || item.production_status === 'pending_form') ? (
                                                                                 <span className="px-2.5 py-0.5 bg-brand-red/20 text-brand-orange border border-brand-orange/30 rounded-lg text-xs font-bold uppercase tracking-wider">
                                                                                     Faltam Dados
@@ -224,17 +458,27 @@ export function AdminProductionPage() {
                                                                                     Em Edição
                                                                                 </span>
                                                                             )}
-                                                                            <p className="text-sm text-gray-400 font-medium">
+                                                                            <p className="text-gray-400 ml-2">
                                                                                 Luta: <span className="text-white">{item.videos?.title}</span> <br className="sm:hidden" />
                                                                                 <span className="hidden sm:inline">• </span>Pedido: <span className="text-white">#{item.order_id?.substring(0, 8).toUpperCase()}</span>
                                                                             </p>
                                                                         </div>
                                                                     </div>
-                                                                    <div className="text-left sm:text-right text-sm text-gray-500 font-medium">
-                                                                        Data do Pedido: <br className="hidden sm:inline" />
-                                                                        <span className="text-gray-300 bg-black px-2 py-1 rounded-md border border-gray-800">
-                                                                            {item.orders?.created_at ? new Date(item.orders.created_at).toLocaleDateString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                                                                        </span>
+                                                                    <div className="flex flex-col items-end gap-3 w-full sm:w-auto">
+                                                                        <div className="text-left sm:text-right text-xs sm:text-sm text-gray-500 font-medium bg-black px-3 py-2 rounded-lg border border-gray-800 self-end w-full sm:w-auto">
+                                                                            Data: <span className="text-gray-300 ml-1">
+                                                                                {item.orders?.created_at ? new Date(item.orders.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                                                                            </span>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => handleReorder(item.id, item.orders.id, index, group.pending.length, group.pending)}
+                                                                            disabled={updatingId === item.id}
+                                                                            className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold uppercase tracking-wider rounded border border-gray-600 transition-colors w-full sm:w-auto"
+                                                                            title="Mudar posição na fila deste evento"
+                                                                        >
+                                                                            {updatingId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowUpDown className="w-3.5 h-3.5" />}
+                                                                            Mudar Posição
+                                                                        </button>
                                                                     </div>
                                                                 </div>
 
@@ -411,6 +655,143 @@ export function AdminProductionPage() {
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* Modal de Inserção Manual */}
+            {isAddModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-[#111] border border-brand-red/30 p-6 sm:p-8 rounded-2xl w-full max-w-lg relative shadow-[0_0_40px_rgba(220,38,38,0.15)] max-h-[90vh] overflow-y-auto">
+                        <button
+                            onClick={() => setIsAddModalOpen(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors p-2"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-6 border-b border-brand-red/20 pb-4">
+                            <Plus className="w-6 h-6 text-brand-orange" />
+                            <h2 className="text-2xl font-black font-heading italic uppercase tracking-widest text-white">
+                                Adicionar <span className="text-brand-orange">Edição</span>
+                            </h2>
+                        </div>
+
+                        <form onSubmit={handleManualCreate} className="space-y-6">
+                            {/* Buscar Usuário */}
+                            <div className="relative">
+                                <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                    Pesquisar Cliente (Email) *
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Search className="h-4 w-4 text-gray-500" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={searchTerm}
+                                        onChange={(e) => {
+                                            setSearchTerm(e.target.value);
+                                            if (selectedUser && e.target.value !== selectedUser.email) {
+                                                setSelectedUser(null);
+                                            }
+                                        }}
+                                        className="pl-10 w-full bg-black border border-gray-700 text-white rounded-xl focus:ring-brand-orange focus:border-brand-orange"
+                                        placeholder="Digite o email do cliente..."
+                                        required
+                                    />
+                                    {isSearchingUsers && (
+                                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                            <Loader2 className="h-4 w-4 text-brand-orange animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Resultados da Busca */}
+                                {searchResults.length > 0 && !selectedUser && (
+                                    <ul className="absolute z-10 mt-1 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                                        {searchResults.map((user) => (
+                                            <li
+                                                key={user.id}
+                                                className="px-4 py-3 hover:bg-brand-dark cursor-pointer border-b border-gray-800 last:border-0"
+                                                onClick={() => handleSelectUser(user)}
+                                            >
+                                                <p className="text-white font-bold text-sm truncate">{user.full_name || 'Sem nome'}</p>
+                                                <p className="text-brand-orange text-xs truncate">{user.email}</p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                                
+                                {selectedUser && (
+                                    <p className="mt-2 text-xs text-green-400 font-bold uppercase flex items-center gap-1">
+                                        Usuário Vinculado.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Seleção de Luta */}
+                            <div>
+                                <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                    Selecione o Vídeo / Luta *
+                                </label>
+                                <select
+                                    value={manualVideoId}
+                                    onChange={(e) => setManualVideoId(e.target.value)}
+                                    className="w-full bg-black border border-gray-700 text-white rounded-xl focus:ring-brand-orange focus:border-brand-orange text-sm p-3"
+                                    required
+                                >
+                                    <option value="" disabled>Selecione um evento...</option>
+                                    {allVideos.map(video => (
+                                        <option key={video.id} value={video.id}>
+                                            {video.event_name} - {video.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {/* Nível de Acesso */}
+                                <div>
+                                    <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                        Acesso
+                                    </label>
+                                    <select
+                                        value={manualAccessLevel}
+                                        onChange={(e) => setManualAccessLevel(e.target.value)}
+                                        className="w-full bg-black border border-gray-700 text-white rounded-xl focus:ring-brand-orange focus:border-brand-orange text-sm p-3"
+                                    >
+                                        <option value="highlight_only">Apenas Highlight</option>
+                                        <option value="full_access">Highlight + Luta Íntegra</option>
+                                    </select>
+                                </div>
+
+                                {/* Posicao na Fila */}
+                                <div>
+                                    <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                        Posição Exata (Fila)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={manualQueuePosition}
+                                        onChange={(e) => setManualQueuePosition(e.target.value)}
+                                        className="w-full bg-black border border-gray-700 text-white rounded-xl focus:ring-brand-orange focus:border-brand-orange font-mono"
+                                        placeholder="Padrão: Final da Fila"
+                                    />
+                                    <p className="text-[10px] text-gray-500 mt-1 uppercase">Deixe em branco para Fim. '1' força p/ Início.</p>
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isSubmittingManual || !selectedUser || !manualVideoId}
+                                className="w-full py-4 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase italic tracking-widest hover:shadow-[0_0_20px_rgba(220,38,38,0.4)] transition-all disabled:opacity-50 flex items-center justify-center mt-4"
+                            >
+                                {isSubmittingManual ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
+                                {isSubmittingManual ? 'Adicionando...' : 'Confirmar e Adicionar'}
+                            </button>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>
