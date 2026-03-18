@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Video, ExternalLink, RefreshCw, Send, Plus, Search, X, ArrowUpDown } from 'lucide-react';
+import { Loader2, Video, ExternalLink, RefreshCw, Send, Plus, Search, X, ArrowUpDown, User } from 'lucide-react';
 
 export function AdminProductionPage() {
     const [loading, setLoading] = useState(true);
@@ -24,10 +24,22 @@ export function AdminProductionPage() {
     const [manualAccessLevel, setManualAccessLevel] = useState('full_access');
     const [manualQueuePosition, setManualQueuePosition] = useState('');
     const [isSubmittingManual, setIsSubmittingManual] = useState(false);
+    
+    // Auth State
+    const [currentUser, setCurrentUser] = useState<any>(null);
 
     useEffect(() => {
+        loadCurrentUser();
         loadProductions();
     }, []);
+
+    const loadCurrentUser = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+            setCurrentUser({ id: user.id, full_name: profile?.full_name || user.email });
+        }
+    };
 
     const loadProductions = async () => {
         setLoading(true);
@@ -126,6 +138,50 @@ export function AdminProductionPage() {
 
     const handleUrlChange = (itemId: string, value: string) => {
         setDeliveryUrls(prev => ({ ...prev, [itemId]: value }));
+    };
+
+    // Editor Assignment Logic
+    const handleAssignEditor = async (itemId: string) => {
+        if (!currentUser) return;
+        setUpdatingId(itemId);
+        try {
+            const { error } = await supabase
+                .from('order_items')
+                .update({
+                    editor_id: currentUser.id,
+                    editor_name: currentUser.full_name
+                })
+                .eq('id', itemId);
+
+            if (error) throw error;
+            await loadProductions();
+        } catch (error: any) {
+            console.error('Erro ao assumir edição:', error);
+            alert('Erro ao assumir edição: ' + error.message);
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const handleUnassignEditor = async (itemId: string) => {
+        setUpdatingId(itemId);
+        try {
+            const { error } = await supabase
+                .from('order_items')
+                .update({
+                    editor_id: null,
+                    editor_name: null
+                })
+                .eq('id', itemId);
+
+            if (error) throw error;
+            await loadProductions();
+        } catch (error: any) {
+            console.error('Erro ao soltar edição:', error);
+            alert('Erro ao soltar edição: ' + error.message);
+        } finally {
+            setUpdatingId(null);
+        }
     };
 
     // User Search Logic
@@ -458,6 +514,11 @@ export function AdminProductionPage() {
                                                                                     Em Edição
                                                                                 </span>
                                                                             )}
+                                                                            {item.editor_name && (
+                                                                                <span className="px-2.5 py-0.5 bg-purple-900/40 text-purple-400 border border-purple-500/30 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1">
+                                                                                    Editando: {item.editor_name}
+                                                                                </span>
+                                                                            )}
                                                                             <p className="text-gray-400 ml-2">
                                                                                 Luta: <span className="text-white">{item.videos?.title}</span> <br className="sm:hidden" />
                                                                                 <span className="hidden sm:inline">• </span>Pedido: <span className="text-white">#{item.order_id?.substring(0, 8).toUpperCase()}</span>
@@ -479,6 +540,29 @@ export function AdminProductionPage() {
                                                                             {updatingId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowUpDown className="w-3.5 h-3.5" />}
                                                                             Mudar Posição
                                                                         </button>
+                                                                        {item.editor_id ? (
+                                                                            item.editor_id === currentUser?.id ? (
+                                                                                <button
+                                                                                    onClick={() => handleUnassignEditor(item.id)}
+                                                                                    disabled={updatingId === item.id}
+                                                                                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-red-900/40 hover:bg-red-900/60 text-red-400 text-xs font-bold uppercase tracking-wider rounded border border-red-500/30 transition-colors w-full sm:w-auto"
+                                                                                    title="Cancelar edição e devolver para a fila"
+                                                                                >
+                                                                                    {updatingId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                                                                                    Soltar Luta
+                                                                                </button>
+                                                                            ) : null
+                                                                        ) : (
+                                                                            <button
+                                                                                onClick={() => handleAssignEditor(item.id)}
+                                                                                disabled={updatingId === item.id || !currentUser}
+                                                                                className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold uppercase tracking-wider rounded border border-purple-500 transition-colors w-full sm:w-auto"
+                                                                                title="Assumir a edição desta luta"
+                                                                            >
+                                                                                {updatingId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <User className="w-3.5 h-3.5" />}
+                                                                                Assumir Edição
+                                                                            </button>
+                                                                        )}
                                                                     </div>
                                                                 </div>
 

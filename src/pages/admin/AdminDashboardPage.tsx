@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { DollarSign, Video, Users, TrendingUp } from 'lucide-react';
+import { useOutletContext, Navigate } from 'react-router-dom';
 
 export function AdminDashboardPage() {
+    const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
+
     const [stats, setStats] = useState({
         totalRevenue: 0,
         totalOrders: 0,
@@ -66,6 +69,8 @@ export function AdminDashboardPage() {
             <p className="text-2xl font-black font-heading tracking-widest text-white mt-1 relative z-10">{value}</p>
         </div>
     );
+
+    if (!isAdmin) return <Navigate to="/admin/production" replace />;
 
     return (
         <div className="space-y-8">

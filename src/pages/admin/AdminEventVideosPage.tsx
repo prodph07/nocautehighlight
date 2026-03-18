@@ -5,8 +5,11 @@ import { VideoService } from '../../services/video.service';
 import { EventService } from '../../services/event.service';
 import { type FightEvent, type Event } from '../../types';
 import { Plus, Edit, Trash2, Loader2, ArrowLeft, Upload, FileText, CheckCircle } from 'lucide-react';
+import { useOutletContext, Navigate } from 'react-router-dom';
 
 export function AdminEventVideosPage() {
+    const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
+
     const { eventId } = useParams<{ eventId: string }>();
     const navigate = useNavigate();
 
@@ -277,6 +280,8 @@ export function AdminEventVideosPage() {
         e.preventDefault();
         await processCSVData(csvText);
     };
+
+    if (!isAdmin) return <Navigate to="/admin/production" replace />;
 
     return (
         <div>

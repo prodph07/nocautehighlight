@@ -201,7 +201,7 @@ export function PaymentPage() {
 
                 if (itemError) throw itemError;
 
-                await supabase.from('coupons').update({ current_uses: appliedCoupon.current_uses + 1 }).eq('id', appliedCoupon.id);
+                await supabase.rpc('increment_coupon_uses', { p_coupon_id: appliedCoupon.id });
 
                 alert('Acesso liberado com sucesso!');
                 navigate('/minha-conta');
@@ -270,7 +270,7 @@ export function PaymentPage() {
                 setQrCodeUrl(url);
 
                 if (appliedCoupon) {
-                    await supabase.from('coupons').update({ current_uses: appliedCoupon.current_uses + 1 }).eq('id', appliedCoupon.id);
+                    await supabase.rpc('increment_coupon_uses', { p_coupon_id: appliedCoupon.id });
                 }
             } else {
                 alert('Pedido realizado! Se foi cartão, o acesso será liberado em breve.');

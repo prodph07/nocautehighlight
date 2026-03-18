@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { SettingsService } from '../../services/settings.service';
 import type { AppSettings } from '../../services/settings.service';
 import { Save, Loader2, DollarSign } from 'lucide-react';
+import { useOutletContext, Navigate } from 'react-router-dom';
 
 export function AdminSettingsPage() {
+    const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
     const [settings, setSettings] = useState<AppSettings | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -38,6 +40,8 @@ export function AdminSettingsPage() {
         }
         setSaving(false);
     };
+
+    if (!isAdmin) return <Navigate to="/admin/production" replace />;
 
     if (loading || !settings) {
         return (

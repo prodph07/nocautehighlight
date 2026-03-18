@@ -4,8 +4,11 @@ import { EventService } from '../../services/event.service';
 import { Plus, Trash2, Calendar, MapPin, Loader2, Edit, FolderOpen, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { compressImageToWebp } from '../../utils/imageUtils';
+import { useOutletContext, Navigate } from 'react-router-dom';
 
 export function AdminEventsPage() {
+    const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
+
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -134,6 +137,8 @@ export function AdminEventsPage() {
             loadEvents();
         }
     };
+
+    if (!isAdmin) return <Navigate to="/admin/production" replace />;
 
     return (
         <div>

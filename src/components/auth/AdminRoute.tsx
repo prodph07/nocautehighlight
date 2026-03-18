@@ -6,6 +6,7 @@ import { Loader2, ShieldAlert } from 'lucide-react';
 export function AdminRoute() {
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isEditor, setIsEditor] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -23,7 +24,7 @@ export function AdminRoute() {
 
             const { data: profile, error } = await supabase
                 .from('profiles')
-                .select('is_admin')
+                .select('is_admin, is_editor')
                 .eq('id', user.id)
                 .single();
 
@@ -31,8 +32,13 @@ export function AdminRoute() {
                 console.error("Error fetching profile for admin check:", error);
             }
 
-            if (profile && profile.is_admin === true) {
-                setIsAdmin(true);
+            if (profile) {
+                if (profile.is_admin === true) {
+                    setIsAdmin(true);
+                }
+                if (profile.is_editor === true) {
+                    setIsEditor(true);
+                }
             }
         } catch (err) {
             console.error(err);
@@ -49,7 +55,7 @@ export function AdminRoute() {
         );
     }
 
-    if (!isAdmin) {
+    if (!isAdmin && !isEditor) {
         return (
             <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
                 <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center border-t-4 border-red-500">
@@ -58,7 +64,7 @@ export function AdminRoute() {
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Negado</h2>
                     <p className="text-gray-600 mb-8">
-                        Você não tem privilégios de administrador para acessar esta página.
+                        Você não tem privilégios de administrador ou editor para acessar esta página.
                         Este incidente foi registrado.
                     </p>
                     <button
@@ -72,6 +78,6 @@ export function AdminRoute() {
         );
     }
 
-    // If is admin, render the child routes (AdminLayout)
-    return <Outlet />;
+    // If is admin or editor, render the child routes (AdminLayout)
+    return <Outlet context={{ isAdmin, isEditor }} />;
 }

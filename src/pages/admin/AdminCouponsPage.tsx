@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Ticket, Plus, Search, Check, X, ShieldAlert, Loader2 } from 'lucide-react';
+import { useOutletContext, Navigate } from 'react-router-dom';
 
 export function AdminCouponsPage() {
+    const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
+
     const [coupons, setCoupons] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -109,6 +112,8 @@ export function AdminCouponsPage() {
     const filteredCoupons = coupons.filter(c => 
         c.code.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (!isAdmin) return <Navigate to="/admin/production" replace />;
 
     return (
         <div className="space-y-8">

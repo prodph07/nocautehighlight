@@ -1,12 +1,19 @@
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, Link, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { LayoutDashboard, LogOut, Package, Calendar, Scissors, Settings, Menu, X, Ticket } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function AdminLayout() {
     const navigate = useNavigate();
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const { isAdmin, isEditor } = useOutletContext<{ isAdmin: boolean; isEditor: boolean }>();
+
+    useEffect(() => {
+        if (!isAdmin && isEditor && (location.pathname === '/admin' || location.pathname === '/admin/')) {
+            navigate('/admin/production', { replace: true });
+        }
+    }, [isAdmin, isEditor, location.pathname, navigate]);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -44,34 +51,40 @@ export function AdminLayout() {
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-                    <Link
-                        to="/admin"
-                        onClick={() => setIsSidebarOpen(false)}
-                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
-                    >
-                        <LayoutDashboard className={`w-5 h-5 ${isActive('/admin') ? 'text-brand-orange' : ''}`} />
-                        <span>Dashboard</span>
-                    </Link>
+                    {isAdmin && (
+                        <Link
+                            to="/admin"
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
+                        >
+                            <LayoutDashboard className={`w-5 h-5 ${isActive('/admin') ? 'text-brand-orange' : ''}`} />
+                            <span>Dashboard</span>
+                        </Link>
+                    )}
 
                     {/* Removed videos global link */}
 
-                    <Link
-                        to="/admin/events"
-                        onClick={() => setIsSidebarOpen(false)}
-                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin/events') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
-                    >
-                        <Calendar className={`w-5 h-5 ${isActive('/admin/events') ? 'text-brand-orange' : ''}`} />
-                        <span>Eventos</span>
-                    </Link>
+                    {isAdmin && (
+                        <Link
+                            to="/admin/events"
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin/events') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
+                        >
+                            <Calendar className={`w-5 h-5 ${isActive('/admin/events') ? 'text-brand-orange' : ''}`} />
+                            <span>Eventos</span>
+                        </Link>
+                    )}
 
-                    <Link
-                        to="/admin/orders"
-                        onClick={() => setIsSidebarOpen(false)}
-                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin/orders') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
-                    >
-                        <Package className={`w-5 h-5 ${isActive('/admin/orders') ? 'text-brand-orange' : ''}`} />
-                        <span>Pedidos</span>
-                    </Link>
+                    {isAdmin && (
+                        <Link
+                            to="/admin/orders"
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin/orders') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
+                        >
+                            <Package className={`w-5 h-5 ${isActive('/admin/orders') ? 'text-brand-orange' : ''}`} />
+                            <span>Pedidos</span>
+                        </Link>
+                    )}
 
                     <Link
                         to="/admin/production"
@@ -82,23 +95,27 @@ export function AdminLayout() {
                         <span>Fila de Edição</span>
                     </Link>
 
-                    <Link
-                        to="/admin/coupons"
-                        onClick={() => setIsSidebarOpen(false)}
-                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin/coupons') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
-                    >
-                        <Ticket className={`w-5 h-5 ${isActive('/admin/coupons') ? 'text-brand-orange' : ''}`} />
-                        <span>Cupons</span>
-                    </Link>
+                    {isAdmin && (
+                        <Link
+                            to="/admin/coupons"
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin/coupons') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
+                        >
+                            <Ticket className={`w-5 h-5 ${isActive('/admin/coupons') ? 'text-brand-orange' : ''}`} />
+                            <span>Cupons</span>
+                        </Link>
+                    )}
 
-                    <Link
-                        to="/admin/settings"
-                        onClick={() => setIsSidebarOpen(false)}
-                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin/settings') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
-                    >
-                        <Settings className={`w-5 h-5 ${isActive('/admin/settings') ? 'text-brand-orange' : ''}`} />
-                        <span>Configurações</span>
-                    </Link>
+                    {isAdmin && (
+                        <Link
+                            to="/admin/settings"
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin/settings') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
+                        >
+                            <Settings className={`w-5 h-5 ${isActive('/admin/settings') ? 'text-brand-orange' : ''}`} />
+                            <span>Configurações</span>
+                        </Link>
+                    )}
                 </nav>
 
                 <div className="p-4 border-t border-brand-red/20">
@@ -115,7 +132,7 @@ export function AdminLayout() {
             {/* Main Content */}
             <main className="flex-1 md:ml-64 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                 <div className="mx-auto w-full max-w-7xl">
-                    <Outlet />
+                    <Outlet context={{ isAdmin, isEditor }} />
                 </div>
             </main>
         </div>

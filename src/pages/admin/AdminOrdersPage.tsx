@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { Package, Search, Calendar, CheckCircle, Clock, XCircle, Download, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useOutletContext, Navigate } from 'react-router-dom';
 
 interface OrderDetail {
     id: string;
@@ -26,6 +27,8 @@ interface OrderDetail {
 }
 
 export function AdminOrdersPage() {
+    const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
+
     const [orders, setOrders] = useState<OrderDetail[]>([]);
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -174,6 +177,8 @@ export function AdminOrdersPage() {
         link.download = `pedidos_${format(new Date(), 'dd-MM-yyyy')}.csv`;
         link.click();
     };
+
+    if (!isAdmin) return <Navigate to="/admin/production" replace />;
 
     return (
         <div className="space-y-6">

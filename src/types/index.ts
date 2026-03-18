@@ -4,6 +4,8 @@ export interface Profile {
     full_name?: string;
     whatsapp?: string;
     cpf?: string;
+    is_admin?: boolean;
+    is_editor?: boolean;
     created_at: string;
 }
 
@@ -64,6 +66,8 @@ export interface OrderItem {
     production_status: ProductionStatus;
     production_form_data?: ProductionFormData;
     delivered_video_url?: string;
+    editor_id?: string;
+    editor_name?: string;
     videos?: Video;
 }
 
