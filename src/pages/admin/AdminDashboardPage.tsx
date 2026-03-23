@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
 import { DollarSign, Video, Users, TrendingUp, Calendar, MessageCircle, AlertCircle, ShoppingCart, RefreshCw, Loader2 } from 'lucide-react';
 import { useOutletContext, Navigate } from 'react-router-dom';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays, startOfMonth, startOfToday, isAfter, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -300,11 +300,11 @@ export function AdminDashboardPage() {
                                     <XAxis dataKey="date" stroke="#666" tick={{ fill: '#888', fontSize: 12 }} />
                                     <YAxis tickFormatter={(value) => `R$ ${value}`} stroke="#666" tick={{ fill: '#888', fontSize: 12 }} />
                                     <RechartsTooltip 
-                                        formatter={(value: number) => [formatCurrency(value), 'Faturamento']}
+                                        formatter={(value: any) => [formatCurrency(Number(value) || 0), 'Faturamento']}
                                         contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: '8px' }}
                                         itemStyle={{ color: '#f97316', fontWeight: 'bold' }}
                                     />
-                                    <Line type="monotone" dataKey="Faturamento" stroke="#f97316" strokeWidth={3} dot={{ r: 4, fill: '#f97316' }} activeDot={{ r: 6, shadow: '0 0 10px #f97316' }} />
+                                    <Line type="monotone" dataKey="Faturamento" stroke="#f97316" strokeWidth={3} dot={{ r: 4, fill: '#f97316' }} activeDot={{ r: 6, fill: '#f97316', stroke: '#fff', strokeWidth: 2 }} />
                                 </LineChart>
                             </ResponsiveContainer>
                         )}
