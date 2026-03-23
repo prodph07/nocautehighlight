@@ -201,7 +201,10 @@ export function PaymentPage() {
 
                 if (itemError) throw itemError;
 
-                await supabase.rpc('increment_coupon_uses', { p_coupon_id: appliedCoupon.id });
+                const { error: rpcError } = await supabase.rpc('increment_coupon_uses', { p_coupon_id: appliedCoupon.id });
+                if (rpcError) {
+                    console.error("Failed to increment coupon uses:", rpcError);
+                }
 
                 alert('Acesso liberado com sucesso!');
                 navigate('/minha-conta');
@@ -270,7 +273,10 @@ export function PaymentPage() {
                 setQrCodeUrl(url);
 
                 if (appliedCoupon) {
-                    await supabase.rpc('increment_coupon_uses', { p_coupon_id: appliedCoupon.id });
+                    const { error: rpcError } = await supabase.rpc('increment_coupon_uses', { p_coupon_id: appliedCoupon.id });
+                    if (rpcError) {
+                        console.error("Failed to increment coupon uses:", rpcError);
+                    }
                 }
             } else {
                 alert('Pedido realizado! Se foi cartão, o acesso será liberado em breve.');
