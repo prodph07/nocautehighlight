@@ -6,6 +6,7 @@ import { type PaymentMethod } from '../types';
 import { VideoService } from '../services/video.service';
 import { PagarmeService } from '../services/pagarme.service';
 import { SettingsService } from '../services/settings.service';
+import { EventService } from '../services/event.service';
 import { supabase } from '../lib/supabase';
 import { isValidCPF } from '../utils/validators';
 
@@ -25,6 +26,12 @@ export function PaymentPage() {
     // Upsell state
     const [upsellPrice, setUpsellPrice] = useState<number>(20); // Default, updated on load
     const [wantsFullFight, setWantsFullFight] = useState(false);
+
+    // Photo Purchase Options
+    const [purchaseOption, setPurchaseOption] = useState<'highlight_only' | 'photo_only' | 'photo_and_highlight'>('highlight_only');
+    const [hasPhotos, setHasPhotos] = useState(false);
+    const [photoOnlyPrice, setPhotoOnlyPrice] = useState(0);
+    const [photoPromoPrice, setPhotoPromoPrice] = useState(0);
 
     // Coupon state
     const [couponCode, setCouponCode] = useState('');
@@ -58,6 +65,13 @@ export function PaymentPage() {
             if (videoData) {
                 setEvent(videoData);
                 setUpsellPrice(Number(settingsData.full_fight_upsell_price));
+                setPhotoOnlyPrice(Number(settingsData.photo_only_price));
+                setPhotoPromoPrice(Number(settingsData.photo_and_highlight_promo_price));
+
+                if (videoData.event_id) {
+                    const eventData = await EventService.getById(videoData.event_id);
+                    setHasPhotos(eventData?.has_photos || false);
+                }
             } else {
                 navigate('/');
             }
@@ -171,9 +185,26 @@ export function PaymentPage() {
                 }
             }
 
-            const baseAmountForTx = event.price_highlight + (wantsFullFight ? upsellPrice : 0);
+            let baseAmountForTx = 0;
+            if (purchaseOption === 'highlight_only') {
+                baseAmountForTx = event.price_highlight + (wantsFullFight ? upsellPrice : 0);
+            } else if (purchaseOption === 'photo_only') {
+                baseAmountForTx = photoOnlyPrice;
+            } else if (purchaseOption === 'photo_and_highlight') {
+                baseAmountForTx = photoPromoPrice + (wantsFullFight ? upsellPrice : 0);
+            }
+
             const discountAmountForTx = appliedCoupon ? (baseAmountForTx * appliedCoupon.discount_percentage) / 100 : 0;
             const finalAmount = Math.max(0, baseAmountForTx - discountAmountForTx);
+
+            let selectedAccessLevel = 'highlight_only';
+            if (purchaseOption === 'highlight_only') {
+                selectedAccessLevel = wantsFullFight ? 'full_access' : 'highlight_only';
+            } else if (purchaseOption === 'photo_only') {
+                selectedAccessLevel = 'photo_only';
+            } else if (purchaseOption === 'photo_and_highlight') {
+                selectedAccessLevel = wantsFullFight ? 'photo_and_full_access' : 'photo_and_highlight';
+            }
 
             if (finalAmount === 0 && appliedCoupon && appliedCoupon.discount_percentage === 100) {
                 // Free checkout bypass logic
@@ -196,7 +227,7 @@ export function PaymentPage() {
                     .insert({
                         order_id: orderData.id,
                         video_id: event.id,
-                        access_level: wantsFullFight ? 'full_access' : 'highlight_only'
+                        access_level: selectedAccessLevel
                     });
 
                 if (itemError) throw itemError;
@@ -211,9 +242,14 @@ export function PaymentPage() {
                 return;
             }
 
+            let descriptionOptions = '';
+            if (purchaseOption === 'highlight_only') descriptionOptions = wantsFullFight ? ' + Luta na Íntegra' : '';
+            if (purchaseOption === 'photo_only') descriptionOptions = ' (Apenas Fotos)';
+            if (purchaseOption === 'photo_and_highlight') descriptionOptions = wantsFullFight ? ' + Luta na Íntegra + Fotos' : ' + Fotos';
+
             const transaction = await PagarmeService.createTransaction({
                 amount: Math.round(finalAmount * 100),
-                description: `Acesso ao evento: ${event.title}${wantsFullFight ? ' + Luta na Íntegra' : ''}${appliedCoupon ? ` (Cupom: ${appliedCoupon.code})` : ''}`,
+                description: `Acesso ao evento: ${event.title}${descriptionOptions}${appliedCoupon ? ` (Cupom: ${appliedCoupon.code})` : ''}`,
                 payment_method: paymentMethod as PaymentMethod,
                 customer: {
                     name: customerName,
@@ -259,7 +295,7 @@ export function PaymentPage() {
                 .insert({
                     order_id: orderData.id,
                     video_id: event.id,
-                    access_level: wantsFullFight ? 'full_access' : 'highlight_only'
+                    access_level: selectedAccessLevel
                 });
 
             if (itemError) {
@@ -314,6 +350,14 @@ export function PaymentPage() {
             </div>
         );
     }
+
+    let displayBaseAmount = 0;
+    if (purchaseOption === 'highlight_only') displayBaseAmount = event.price_highlight;
+    else if (purchaseOption === 'photo_only') displayBaseAmount = photoOnlyPrice;
+    else if (purchaseOption === 'photo_and_highlight') displayBaseAmount = photoPromoPrice;
+    
+    displayBaseAmount += (wantsFullFight ? upsellPrice : 0);
+    const displayFinalAmount = Math.max(0, displayBaseAmount * (appliedCoupon ? (100 - appliedCoupon.discount_percentage) / 100 : 1));
 
     if (qrCode) {
         return (
@@ -383,30 +427,98 @@ export function PaymentPage() {
                             </div>
                         </div>
 
-                        {/* Upsell Checkbox */}
-                        <div className="mb-6 p-4 rounded-xl border border-brand-red/30 bg-brand-red/5 hover:bg-brand-red/10 transition-colors cursor-pointer" onClick={() => setWantsFullFight(!wantsFullFight)}>
-                            <label className="flex items-start gap-3 cursor-pointer">
-                                <div className="pt-0.5">
-                                    <input
-                                        type="checkbox"
-                                        className="w-5 h-5 rounded border-gray-600 bg-brand-dark text-brand-orange focus:ring-brand-orange focus:ring-offset-brand-dark cursor-pointer"
-                                        checked={wantsFullFight}
-                                        onChange={(e) => setWantsFullFight(e.target.checked)}
-                                    />
-                                </div>
-                                <div className="flex-1">
+                        {/* Package Selection */}
+                        {hasPhotos && (
+                            <div className="mb-6 space-y-3">
+                                <label className="block text-sm font-bold text-gray-300 uppercase tracking-wider mb-2">
+                                    Escolha seu Pacote
+                                </label>
+                                
+                                <div 
+                                    className={`p-4 rounded-xl border cursor-pointer transition-all ${purchaseOption === 'highlight_only' ? 'border-brand-orange bg-brand-orange/10 shadow-[0_0_15px_rgba(234,88,12,0.15)]' : 'border-gray-700 bg-brand-dark hover:border-gray-500'}`}
+                                    onClick={() => setPurchaseOption('highlight_only')}
+                                >
                                     <div className="flex justify-between items-center mb-1">
-                                        <span className="font-bold text-white uppercase font-heading tracking-wider">Quero a Luta na Íntegra</span>
-                                        <span className="bg-gradient-to-r from-brand-red to-brand-orange text-white text-xs px-2.5 py-1 rounded font-black font-heading tracking-widest shadow-md">
-                                            + {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(upsellPrice)}
+                                        <span className="font-bold text-white uppercase font-heading tracking-wider flex items-center gap-2">
+                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${purchaseOption === 'highlight_only' ? 'border-brand-orange' : 'border-gray-500'}`}>
+                                                {purchaseOption === 'highlight_only' && <div className="w-2 h-2 rounded-full bg-brand-orange" />}
+                                            </div>
+                                            Somente Highlight
+                                        </span>
+                                        <span className="font-bold text-white">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(evt.price_highlight)}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-gray-400 font-medium">
-                                        Adicione a gravação completa da luta (sem cortes) ao seu pacote e receba todos os rounds.
-                                    </p>
+                                    <p className="text-xs text-gray-400 font-medium pl-6">Vídeo editado com os melhores momentos da sua luta.</p>
                                 </div>
-                            </label>
-                        </div>
+
+                                <div 
+                                    className={`p-4 rounded-xl border cursor-pointer transition-all ${purchaseOption === 'photo_only' ? 'border-brand-orange bg-brand-orange/10 shadow-[0_0_15px_rgba(234,88,12,0.15)]' : 'border-gray-700 bg-brand-dark hover:border-gray-500'}`}
+                                    onClick={() => {
+                                        setPurchaseOption('photo_only');
+                                        setWantsFullFight(false);
+                                    }}
+                                >
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="font-bold text-white uppercase font-heading tracking-wider flex items-center gap-2">
+                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${purchaseOption === 'photo_only' ? 'border-brand-orange' : 'border-gray-500'}`}>
+                                                {purchaseOption === 'photo_only' && <div className="w-2 h-2 rounded-full bg-brand-orange" />}
+                                            </div>
+                                            Somente Fotos
+                                        </span>
+                                        <span className="font-bold text-white">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(photoOnlyPrice)}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-400 font-medium pl-6">Acesso ao álbum completo de fotos da sua luta.</p>
+                                </div>
+
+                                <div 
+                                    className={`p-4 rounded-xl border cursor-pointer transition-all ${purchaseOption === 'photo_and_highlight' ? 'border-brand-orange bg-brand-orange/10 shadow-[0_0_15px_rgba(234,88,12,0.15)]' : 'border-gray-700 bg-brand-dark hover:border-gray-500'}`}
+                                    onClick={() => setPurchaseOption('photo_and_highlight')}
+                                >
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="font-bold text-white uppercase font-heading tracking-wider flex items-center gap-2">
+                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${purchaseOption === 'photo_and_highlight' ? 'border-brand-orange' : 'border-gray-500'}`}>
+                                                {purchaseOption === 'photo_and_highlight' && <div className="w-2 h-2 rounded-full bg-brand-orange" />}
+                                            </div>
+                                            Highlight + Fotos
+                                        </span>
+                                        <span className="bg-gradient-to-r from-brand-red to-brand-orange text-white text-xs px-2 py-1 rounded font-black shadow-md">
+                                            PROMO: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(photoPromoPrice)}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-400 font-medium pl-6">Vídeo de Highlight + Álbum de Fotos completo com desconto.</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Upsell Checkbox */}
+                        {purchaseOption !== 'photo_only' && (
+                            <div className="mb-6 p-4 rounded-xl border border-brand-red/30 bg-brand-red/5 hover:bg-brand-red/10 transition-colors cursor-pointer" onClick={() => setWantsFullFight(!wantsFullFight)}>
+                                <label className="flex items-start gap-3 cursor-pointer">
+                                    <div className="pt-0.5">
+                                        <input
+                                            type="checkbox"
+                                            className="w-5 h-5 rounded border-gray-600 bg-brand-dark text-brand-orange focus:ring-brand-orange focus:ring-offset-brand-dark cursor-pointer"
+                                            checked={wantsFullFight}
+                                            onChange={(e) => setWantsFullFight(e.target.checked)}
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className="font-bold text-white uppercase font-heading tracking-wider">Quero a Luta na Íntegra</span>
+                                            <span className="bg-gradient-to-r from-brand-red to-brand-orange text-white text-xs px-2.5 py-1 rounded font-black font-heading tracking-widest shadow-md">
+                                                + {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(upsellPrice)}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-400 font-medium">
+                                            Adicione a gravação completa da luta (sem cortes) ao seu pacote e receba todos os rounds.
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+                        )}
 
                         {/* Coupon Input */}
                         <div className="mb-6 pt-4 border-t border-brand-red/20">
@@ -458,24 +570,26 @@ export function PaymentPage() {
 
                         {/* Totals */}
                         <div className="border-t border-brand-red/20 pt-4 space-y-2">
-                            <div className="flex justify-between items-center text-sm font-medium text-gray-400">
-                                <span>Subtotal</span>
-                                <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(evt.price_highlight + (wantsFullFight ? upsellPrice : 0))}</span>
-                            </div>
-                            
-                            {appliedCoupon && (
-                                <div className="flex justify-between items-center text-sm font-bold text-green-400">
-                                    <span>Desconto ({appliedCoupon.discount_percentage}%)</span>
-                                    <span>- {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(((evt.price_highlight + (wantsFullFight ? upsellPrice : 0)) * appliedCoupon.discount_percentage) / 100)}</span>
-                                </div>
-                            )}
+                                    <>
+                                        <div className="flex justify-between items-center text-sm font-medium text-gray-400">
+                                            <span>Subtotal</span>
+                                            <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayBaseAmount)}</span>
+                                        </div>
+                                        
+                                        {appliedCoupon && (
+                                            <div className="flex justify-between items-center text-sm font-bold text-green-400">
+                                                <span>Desconto ({appliedCoupon.discount_percentage}%)</span>
+                                                <span>- {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((displayBaseAmount * appliedCoupon.discount_percentage) / 100)}</span>
+                                            </div>
+                                        )}
 
-                            <div className="flex justify-between items-center text-xl font-black font-heading uppercase italic tracking-widest text-white pt-2 border-t border-brand-dark">
-                                <span>Total</span>
-                                <span className="text-brand-orange drop-shadow-sm">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.max(0, (evt.price_highlight + (wantsFullFight ? upsellPrice : 0)) * (appliedCoupon ? (100 - appliedCoupon.discount_percentage) / 100 : 1)))}
-                                </span>
-                            </div>
+                                        <div className="flex justify-between items-center text-xl font-black font-heading uppercase italic tracking-widest text-white pt-2 border-t border-brand-dark">
+                                            <span>Total</span>
+                                            <span className="text-brand-orange drop-shadow-sm">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayFinalAmount)}
+                                            </span>
+                                        </div>
+                                    </>
                         </div>
                     </div>
 
@@ -518,7 +632,7 @@ export function PaymentPage() {
                                     Processando...
                                 </>
                             ) : (
-                                `Pagar ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.max(0, (evt.price_highlight + (wantsFullFight ? upsellPrice : 0)) * (appliedCoupon ? (100 - appliedCoupon.discount_percentage) / 100 : 1)))}`
+                                `Pagar ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayFinalAmount)}`
                             )}
                         </button>
 

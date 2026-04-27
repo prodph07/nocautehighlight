@@ -123,6 +123,17 @@ export function AdminOrdersPage() {
         }
     };
 
+    const getAccessLevelBadge = (accessLevel: string) => {
+        switch(accessLevel) {
+            case 'highlight_only': return { label: 'Highlight', style: 'bg-blue-900/40 text-blue-400 border-blue-500/30' };
+            case 'full_access': return { label: 'Highlight + Luta', style: 'bg-purple-900/40 text-purple-400 border-purple-500/30' };
+            case 'photo_only': return { label: 'Apenas Fotos', style: 'bg-teal-900/40 text-teal-400 border-teal-500/30' };
+            case 'photo_and_highlight': return { label: 'Highlight + Fotos', style: 'bg-indigo-900/40 text-indigo-400 border-indigo-500/30' };
+            case 'photo_and_full_access': return { label: 'Pacote Completo', style: 'bg-pink-900/40 text-pink-400 border-pink-500/30' };
+            default: return { label: 'Desconhecido', style: 'bg-gray-800 text-gray-300 border-gray-700' };
+        }
+    };
+
     const filteredOrders = orders.filter(order => {
         const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
 
@@ -153,7 +164,7 @@ export function AdminOrdersPage() {
         const csvData = filteredOrders.map(order => {
             const date = new Date(order.created_at).toLocaleDateString('pt-BR');
             const itemName = order.order_items?.[0]?.videos?.title || 'N/A';
-            const access = order.order_items?.[0]?.access_level === 'full_access' ? 'Completo' : 'Highlight';
+            const access = getAccessLevelBadge(order.order_items?.[0]?.access_level || '').label;
 
             return [
                 order.id,
@@ -278,8 +289,6 @@ export function AdminOrdersPage() {
                             ) : (
                                 paginatedOrders.map(order => {
                                     const firstItem = order.order_items?.[0];
-                                    const isFullAccess = firstItem?.access_level === 'full_access';
-
                                     return (
                                         <tr key={order.id} className="border-b border-brand-red/10 hover:bg-brand-dark/50 transition-colors">
                                             <td className="p-4 text-xs font-mono text-brand-orange uppercase">
@@ -298,8 +307,8 @@ export function AdminOrdersPage() {
                                                         </div>
                                                         <div className="flex items-center gap-2 mt-1">
                                                             <span className="text-xs text-brand-orange font-bold uppercase">{firstItem.videos.event_name}</span>
-                                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide border ${isFullAccess ? 'bg-purple-900/40 text-purple-400 border-purple-500/30' : 'bg-blue-900/40 text-blue-400 border-blue-500/30'}`}>
-                                                                {isFullAccess ? 'Luta Completa' : 'Highlight'}
+                                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide border ${getAccessLevelBadge(firstItem.access_level).style}`}>
+                                                                {getAccessLevelBadge(firstItem.access_level).label}
                                                             </span>
                                                         </div>
                                                     </div>

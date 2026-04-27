@@ -2,10 +2,14 @@ import { supabase } from '../lib/supabase';
 
 export interface AppSettings {
     full_fight_upsell_price: number;
+    photo_only_price: number;
+    photo_and_highlight_promo_price: number;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
-    full_fight_upsell_price: 20
+    full_fight_upsell_price: 20,
+    photo_only_price: 29.90,
+    photo_and_highlight_promo_price: 49.90
 };
 
 export const SettingsService = {
@@ -36,7 +40,7 @@ export const SettingsService = {
         }
     },
 
-    async updateSettings(settings: Partial<AppSettings>): Promise<boolean> {
+    async updateSettings(settings: Partial<AppSettings>): Promise<{success: boolean, error?: string}> {
         try {
             // Fetch current to merge
             const current = await this.getSettings();
@@ -44,14 +48,16 @@ export const SettingsService = {
 
             const { error } = await supabase
                 .from('settings')
-                .update({ value: newSettings, updated_at: new Date().toISOString() })
-                .eq('id', 'global');
+                .upsert({ id: 'global', value: newSettings, updated_at: new Date().toISOString() });
 
-            if (error) throw error;
-            return true;
-        } catch (error) {
+            if (error) {
+                console.error('Supabase Error updating settings:', error);
+                return { success: false, error: error.message };
+            }
+            return { success: true };
+        } catch (error: any) {
             console.error('Error updating settings:', error);
-            return false;
+            return { success: false, error: error.message || 'Unknown error' };
         }
     }
 };

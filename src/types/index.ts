@@ -18,6 +18,7 @@ export interface Event {
     banner_url?: string;
     drive_link?: string;
     is_active: boolean;
+    has_photos?: boolean;
     created_at?: string;
 }
 
@@ -66,6 +67,7 @@ export interface OrderItem {
     production_status: ProductionStatus;
     production_form_data?: ProductionFormData;
     delivered_video_url?: string;
+    delivered_photo_url?: string;
     editor_id?: string;
     editor_name?: string;
     videos?: Video;

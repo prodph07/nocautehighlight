@@ -353,20 +353,33 @@ export function MyAccountPage() {
                                             )}
                                             {item.production_status === 'delivered' && (
                                                 <>
-                                                    <button
-                                                        onClick={() => handleWatchDelivered(item.delivered_video_url || '#')}
-                                                        className="w-full py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
-                                                    >
-                                                        <ExternalLink className="w-4 h-4" />
-                                                        Acessar / Baixar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleOpenModal(item)}
-                                                        className="w-full py-2 text-sm text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 transition-colors uppercase font-heading"
-                                                    >
-                                                        <Edit3 className="w-4 h-4" />
-                                                        Revisar Informações
-                                                    </button>
+                                                    {item.delivered_video_url && (
+                                                        <button
+                                                            onClick={() => handleWatchDelivered(item.delivered_video_url || '#')}
+                                                            className="w-full py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                                                        >
+                                                            <ExternalLink className="w-4 h-4" />
+                                                            Acessar Vídeo
+                                                        </button>
+                                                    )}
+                                                    {item.delivered_photo_url && (
+                                                        <button
+                                                            onClick={() => handleWatchDelivered(item.delivered_photo_url || '#')}
+                                                            className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                                                        >
+                                                            <ExternalLink className="w-4 h-4" />
+                                                            Acessar Fotos
+                                                        </button>
+                                                    )}
+                                                    {item.access_level !== 'photo_only' && (
+                                                        <button
+                                                            onClick={() => handleOpenModal(item)}
+                                                            className="w-full py-2 text-sm text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 transition-colors uppercase font-heading"
+                                                        >
+                                                            <Edit3 className="w-4 h-4" />
+                                                            Revisar Informações
+                                                        </button>
+                                                    )}
                                                 </>
                                             )}
                                         </div>

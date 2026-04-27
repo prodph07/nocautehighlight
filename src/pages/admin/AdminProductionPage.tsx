@@ -8,6 +8,7 @@ export function AdminProductionPage() {
     const [eventsMap, setEventsMap] = useState<Record<string, string>>({});
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [deliveryUrls, setDeliveryUrls] = useState<{ [key: string]: string }>({});
+    const [deliveryPhotoUrls, setDeliveryPhotoUrls] = useState<{ [key: string]: string }>({});
     const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
     const [editingDelivered, setEditingDelivered] = useState<Record<string, boolean>>({});
 
@@ -83,12 +84,17 @@ export function AdminProductionPage() {
 
             // Pre-populate delivery URLs for items that are already delivered
             const initialUrls: Record<string, string> = {};
+            const initialPhotoUrls: Record<string, string> = {};
             sorted.forEach(item => {
                 if (item.delivered_video_url) {
                     initialUrls[item.id] = item.delivered_video_url;
                 }
+                if (item.delivered_photo_url) {
+                    initialPhotoUrls[item.id] = item.delivered_photo_url;
+                }
             });
             setDeliveryUrls(initialUrls);
+            setDeliveryPhotoUrls(initialPhotoUrls);
         } else {
             console.error("Error fetching productions:", prodRes.error);
         }
@@ -102,35 +108,59 @@ export function AdminProductionPage() {
         }));
     };
 
-    const handleDeliver = async (itemId: string) => {
-        let url = deliveryUrls[itemId];
-        if (!url || !url.trim()) {
+    const handleDeliver = async (itemId: string, accessLevel: string) => {
+        let url = deliveryUrls[itemId] || '';
+        let photoUrl = deliveryPhotoUrls[itemId] || '';
+
+        const needsVideo = accessLevel !== 'photo_only';
+        const needsPhoto = accessLevel.includes('photo');
+
+        if (needsVideo && !url.trim()) {
             alert('Por favor, insira o link do vídeo finalizado.');
             return;
         }
 
-        url = url.trim();
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            url = `https://${url}`;
+        if (needsPhoto && !photoUrl.trim()) {
+            alert('Por favor, insira o link da pasta de fotos.');
+            return;
+        }
+
+        if (needsVideo) {
+            url = url.trim();
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = `https://${url}`;
+            }
+        } else {
+            url = '';
+        }
+
+        if (needsPhoto) {
+            photoUrl = photoUrl.trim();
+            if (!photoUrl.startsWith('http://') && !photoUrl.startsWith('https://')) {
+                photoUrl = `https://${photoUrl}`;
+            }
+        } else {
+            photoUrl = '';
         }
 
         setUpdatingId(itemId);
         try {
+            const updatePayload: any = { production_status: 'delivered' };
+            if (needsVideo) updatePayload.delivered_video_url = url;
+            if (needsPhoto) updatePayload.delivered_photo_url = photoUrl;
+
             const { error } = await supabase
                 .from('order_items')
-                .update({
-                    production_status: 'delivered',
-                    delivered_video_url: url
-                })
+                .update(updatePayload)
                 .eq('id', itemId);
 
             if (error) throw error;
 
-            alert('Vídeo entregue com sucesso! O cliente já pode acessar.');
+            alert('Entregue com sucesso! O cliente já pode acessar.');
             await loadProductions(); // Reload list
         } catch (error: any) {
-            console.error('Error delivering video:', error);
-            alert('Erro ao entregar o vídeo: ' + error.message);
+            console.error('Error delivering item:', error);
+            alert('Erro ao entregar o pedido: ' + error.message);
         } finally {
             setUpdatingId(null);
         }
@@ -138,6 +168,10 @@ export function AdminProductionPage() {
 
     const handleUrlChange = (itemId: string, value: string) => {
         setDeliveryUrls(prev => ({ ...prev, [itemId]: value }));
+    };
+
+    const handlePhotoUrlChange = (itemId: string, value: string) => {
+        setDeliveryPhotoUrls(prev => ({ ...prev, [itemId]: value }));
     };
 
     // Editor Assignment Logic
@@ -400,6 +434,17 @@ export function AdminProductionPage() {
         }, {} as Record<string, GroupedEvent>)
     );
 
+    const getAccessLevelBadge = (accessLevel: string) => {
+        switch(accessLevel) {
+            case 'highlight_only': return { label: 'Highlight', style: 'bg-blue-900/40 text-blue-400 border-blue-500/30' };
+            case 'full_access': return { label: 'Highlight + Luta', style: 'bg-purple-900/40 text-purple-400 border-purple-500/30' };
+            case 'photo_only': return { label: 'Apenas Fotos', style: 'bg-teal-900/40 text-teal-400 border-teal-500/30' };
+            case 'photo_and_highlight': return { label: 'Highlight + Fotos', style: 'bg-indigo-900/40 text-indigo-400 border-indigo-500/30' };
+            case 'photo_and_full_access': return { label: 'Pacote Completo', style: 'bg-pink-900/40 text-pink-400 border-pink-500/30' };
+            default: return { label: 'Desconhecido', style: 'bg-gray-800 text-gray-300 border-gray-700' };
+        }
+    };
+
     return (
         <div className="max-w-6xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -470,7 +515,7 @@ export function AdminProductionPage() {
                                     <div className="border-t border-brand-red/20 bg-brand-dark/30 p-6 space-y-8">
                                         {group.pending.length > 0 && (
                                             <div>
-                                                <h3 className="text-lg font-black font-heading uppercase tracking-widest text-white border-l-4 border-brand-orange pl-3 mb-6">Aguardando <span className="text-brand-orange">Edição</span></h3>
+                                                <h3 className="text-lg font-black font-heading uppercase tracking-widest text-white border-l-4 border-brand-orange pl-3 mb-6">Aguardando <span className="text-brand-orange">Entrega</span></h3>
                                                 <div className="space-y-6">
                                                     {group.pending.map((item, index) => {
                                                         const formData = item.production_form_data || {};
@@ -486,8 +531,11 @@ export function AdminProductionPage() {
                                                                             <span className="flex items-center justify-center bg-gradient-to-br from-brand-red to-brand-orange text-white font-black text-sm w-9 h-9 rounded-full shadow-[0_0_10px_rgba(220,38,38,0.5)] shrink-0">
                                                                                 {index + 1}º
                                                                             </span>
-                                                                            <h4 className="text-lg md:text-xl font-black font-heading tracking-wider text-white uppercase break-words line-clamp-2 pr-4">
-                                                                                Highlight <span className="text-brand-orange">{formData.fighterName || 'Aguard. Form'}</span>
+                                                                            <h4 className="text-lg md:text-xl font-black font-heading tracking-wider text-white uppercase break-words line-clamp-2 pr-4 flex flex-col md:flex-row md:items-center gap-2">
+                                                                                <span>{formData.fighterName || 'Aguard. Form'}</span>
+                                                                                <span className={`text-[10px] w-fit px-2 py-0.5 rounded-full font-bold uppercase tracking-wide border ${getAccessLevelBadge(item.access_level).style}`}>
+                                                                                    {getAccessLevelBadge(item.access_level).label}
+                                                                                </span>
                                                                             </h4>
                                                                         </div>
                                                                         
@@ -511,7 +559,7 @@ export function AdminProductionPage() {
                                                                                 </span>
                                                                             ) : (
                                                                                 <span className="px-2.5 py-0.5 bg-blue-900/40 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-bold uppercase tracking-wider">
-                                                                                    Em Edição
+                                                                                    {item.access_level === 'photo_only' ? 'Aguardando Fotos' : 'Em Edição'}
                                                                                 </span>
                                                                             )}
                                                                             {item.editor_name && (
@@ -598,28 +646,48 @@ export function AdminProductionPage() {
                                                                 </div>
 
                                                                 <div className="border-t border-brand-red/20 pt-6 relative z-10">
-                                                                    <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-3">
-                                                                        Link do Vídeo Finalizado <span className="text-xs text-gray-500 normal-case font-normal italic">(Google Drive, Vimeo, YouTube)</span>
-                                                                    </label>
-                                                                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                                                                        <input
-                                                                            type="url"
-                                                                            placeholder="https://..."
-                                                                            value={deliveryUrls[item.id] || ''}
-                                                                            onChange={(e) => handleUrlChange(item.id, e.target.value)}
-                                                                            className="flex-grow w-full px-4 py-3 bg-black border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all placeholder:text-gray-600"
-                                                                        />
+                                                                    {item.access_level !== 'photo_only' && (
+                                                                        <div className="mb-4">
+                                                                            <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-3">
+                                                                                Link do Vídeo Finalizado <span className="text-xs text-gray-500 normal-case font-normal italic">(Google Drive, Vimeo, YouTube)</span>
+                                                                            </label>
+                                                                            <input
+                                                                                type="url"
+                                                                                placeholder="https://..."
+                                                                                value={deliveryUrls[item.id] || ''}
+                                                                                onChange={(e) => handleUrlChange(item.id, e.target.value)}
+                                                                                className="w-full px-4 py-3 bg-black border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all placeholder:text-gray-600"
+                                                                            />
+                                                                        </div>
+                                                                    )}
+
+                                                                    {item.access_level?.includes('photo') && (
+                                                                        <div className="mb-4">
+                                                                            <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-3">
+                                                                                Link da Pasta de Fotos <span className="text-xs text-gray-500 normal-case font-normal italic">(Google Drive)</span>
+                                                                            </label>
+                                                                            <input
+                                                                                type="url"
+                                                                                placeholder="https://drive.google.com/..."
+                                                                                value={deliveryPhotoUrls[item.id] || ''}
+                                                                                onChange={(e) => handlePhotoUrlChange(item.id, e.target.value)}
+                                                                                className="w-full px-4 py-3 bg-black border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-gray-600"
+                                                                            />
+                                                                        </div>
+                                                                    )}
+
+                                                                    <div className="flex justify-end">
                                                                         <button
-                                                                            onClick={() => handleDeliver(item.id)}
-                                                                            disabled={updatingId === item.id || !deliveryUrls[item.id]}
-                                                                            className="w-full justify-center px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] transition-all flex items-center gap-3 disabled:opacity-50 shrink-0 md:w-auto"
+                                                                            onClick={() => handleDeliver(item.id, item.access_level)}
+                                                                            disabled={updatingId === item.id}
+                                                                            className="w-full md:w-auto justify-center px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] transition-all flex items-center gap-3 disabled:opacity-50"
                                                                         >
                                                                             {updatingId === item.id ? (
                                                                                 <Loader2 className="w-5 h-5 animate-spin" />
                                                                             ) : (
                                                                                 <Send className="w-5 h-5" />
                                                                             )}
-                                                                            Entregar Edição
+                                                                            Entregar Pedido
                                                                         </button>
                                                                     </div>
                                                                 </div>
@@ -644,8 +712,13 @@ export function AdminProductionPage() {
                                                             <div key={item.id} className="bg-brand-dark p-5 rounded-2xl border border-green-500/20 shadow-sm transition-all text-sm">
                                                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                                                     <div>
-                                                                        <h4 className="font-black font-heading tracking-widest uppercase text-white text-base">{formData.fighterName || 'Atleta'}</h4>
-                                                                        <p className="text-sm text-gray-400 font-medium">{item.videos?.title}</p>
+                                                                        <h4 className="font-black font-heading tracking-widest uppercase text-white text-base flex flex-col sm:flex-row sm:items-center gap-2">
+                                                                            <span>{formData.fighterName || 'Atleta'}</span>
+                                                                            <span className={`text-[10px] w-fit px-2 py-0.5 rounded-full font-bold uppercase tracking-wide border ${getAccessLevelBadge(item.access_level).style}`}>
+                                                                                {getAccessLevelBadge(item.access_level).label}
+                                                                            </span>
+                                                                        </h4>
+                                                                        <p className="text-sm text-gray-400 font-medium mt-1">{item.videos?.title}</p>
                                                                     </div>
                                                                     <div className="flex flex-wrap gap-2">
                                                                         <button
@@ -654,16 +727,30 @@ export function AdminProductionPage() {
                                                                         >
                                                                             {isEditing ? 'Ocultar Detalhes' : 'Editar / Conferir'}
                                                                         </button>
-                                                                        <a
-                                                                            href={item.delivered_video_url}
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                            className="px-4 py-2 bg-green-900/40 text-green-400 hover:bg-green-900/60 rounded-lg transition-colors font-bold uppercase tracking-wider text-xs flex items-center border border-green-500/30"
-                                                                            title="Ver Arquivo Final"
-                                                                        >
-                                                                            <ExternalLink className="w-4 h-4 mr-2" />
-                                                                            Vídeo Final
-                                                                        </a>
+                                                                        {item.delivered_video_url && (
+                                                                            <a
+                                                                                href={item.delivered_video_url}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="px-4 py-2 bg-green-900/40 text-green-400 hover:bg-green-900/60 rounded-lg transition-colors font-bold uppercase tracking-wider text-xs flex items-center border border-green-500/30"
+                                                                                title="Ver Arquivo Final"
+                                                                            >
+                                                                                <ExternalLink className="w-4 h-4 mr-2" />
+                                                                                Vídeo Final
+                                                                            </a>
+                                                                        )}
+                                                                        {item.delivered_photo_url && (
+                                                                            <a
+                                                                                href={item.delivered_photo_url}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="px-4 py-2 bg-blue-900/40 text-blue-400 hover:bg-blue-900/60 rounded-lg transition-colors font-bold uppercase tracking-wider text-xs flex items-center border border-blue-500/30"
+                                                                                title="Ver Pasta de Fotos"
+                                                                            >
+                                                                                <ExternalLink className="w-4 h-4 mr-2" />
+                                                                                Fotos
+                                                                            </a>
+                                                                        )}
                                                                     </div>
                                                                 </div>
 
@@ -701,28 +788,48 @@ export function AdminProductionPage() {
                                                                         </div>
 
                                                                         <div className="pt-2">
-                                                                            <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-3">
-                                                                                Atualizar Link do Vídeo Finalizado
-                                                                            </label>
-                                                                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                                                                                <input
-                                                                                    type="url"
-                                                                                    placeholder="https://..."
-                                                                                    value={deliveryUrls[item.id] || ''}
-                                                                                    onChange={(e) => handleUrlChange(item.id, e.target.value)}
-                                                                                    className="flex-grow w-full px-4 py-3 bg-black border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-gray-600"
-                                                                                />
+                                                                            {item.access_level !== 'photo_only' && (
+                                                                                <div className="mb-4">
+                                                                                    <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-3">
+                                                                                        Atualizar Link do Vídeo Finalizado
+                                                                                    </label>
+                                                                                    <input
+                                                                                        type="url"
+                                                                                        placeholder="https://..."
+                                                                                        value={deliveryUrls[item.id] || ''}
+                                                                                        onChange={(e) => handleUrlChange(item.id, e.target.value)}
+                                                                                        className="w-full px-4 py-3 bg-black border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-gray-600"
+                                                                                    />
+                                                                                </div>
+                                                                            )}
+
+                                                                            {item.access_level?.includes('photo') && (
+                                                                                <div className="mb-4">
+                                                                                    <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-3">
+                                                                                        Atualizar Link da Pasta de Fotos
+                                                                                    </label>
+                                                                                    <input
+                                                                                        type="url"
+                                                                                        placeholder="https://drive.google.com/..."
+                                                                                        value={deliveryPhotoUrls[item.id] || ''}
+                                                                                        onChange={(e) => handlePhotoUrlChange(item.id, e.target.value)}
+                                                                                        className="w-full px-4 py-3 bg-black border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-gray-600"
+                                                                                    />
+                                                                                </div>
+                                                                            )}
+                                                                            
+                                                                            <div className="flex justify-end">
                                                                                 <button
-                                                                                    onClick={() => handleDeliver(item.id)}
-                                                                                    disabled={updatingId === item.id || !deliveryUrls[item.id]}
-                                                                                    className="w-full justify-center px-8 py-3 bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-lg font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all flex items-center gap-3 disabled:opacity-50 shrink-0 md:w-auto"
+                                                                                    onClick={() => handleDeliver(item.id, item.access_level)}
+                                                                                    disabled={updatingId === item.id}
+                                                                                    className="w-full md:w-auto justify-center px-8 py-3 bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-lg font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all flex items-center gap-3 disabled:opacity-50"
                                                                                 >
                                                                                     {updatingId === item.id ? (
                                                                                         <Loader2 className="w-5 h-5 animate-spin" />
                                                                                     ) : (
                                                                                         <Send className="w-5 h-5" />
                                                                                     )}
-                                                                                    Atualizar Link
+                                                                                    Atualizar Links
                                                                                 </button>
                                                                             </div>
                                                                         </div>

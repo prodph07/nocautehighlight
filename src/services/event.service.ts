@@ -30,6 +30,20 @@ export const EventService = {
         return data;
     },
 
+    async getById(id: string): Promise<Event | null> {
+        const { data, error } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) {
+            console.error('Error fetching event by id:', error);
+            return null;
+        }
+        return data;
+    },
+
     async create(event: Partial<Event>): Promise<boolean> {
         try {
             const { error } = await supabase

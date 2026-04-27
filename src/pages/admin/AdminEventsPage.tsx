@@ -18,7 +18,8 @@ export function AdminEventsPage() {
         fight_date: new Date().toISOString().split('T')[0],
         banner_url: '',
         drive_link: '',
-        is_active: true
+        is_active: true,
+        has_photos: false
     });
     const [editingId, setEditingId] = useState<string | null>(null);
     const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
@@ -104,7 +105,8 @@ export function AdminEventsPage() {
             fight_date: event.fight_date,
             banner_url: event.banner_url || '',
             drive_link: event.drive_link || '',
-            is_active: event.is_active
+            is_active: event.is_active,
+            has_photos: event.has_photos || false
         });
         setEditingId(event.id);
         setSelectedImageFile(null);
@@ -121,7 +123,8 @@ export function AdminEventsPage() {
             fight_date: new Date().toISOString().split('T')[0],
             banner_url: '',
             drive_link: '',
-            is_active: true
+            is_active: true,
+            has_photos: false
         });
         setSelectedImageFile(null);
         setImagePreview(null);
@@ -341,6 +344,21 @@ export function AdminEventsPage() {
                                 <p className="text-xs text-brand-red font-medium mt-2 italic">
                                     * Este link não será visto pelos clientes. É um atalho para facilitar o acesso da produção aos vídeos brutos.
                                 </p>
+                            </div>
+
+                            <div className="pt-2">
+                                <label className="flex items-center gap-3 cursor-pointer p-4 rounded-xl border border-brand-red/20 bg-brand-dark hover:bg-brand-dark/80 transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        className="w-5 h-5 rounded border-gray-700 bg-black text-brand-orange focus:ring-brand-orange focus:ring-offset-brand-dark"
+                                        checked={newEvent.has_photos || false}
+                                        onChange={e => setNewEvent({ ...newEvent, has_photos: e.target.checked })}
+                                    />
+                                    <div>
+                                        <span className="font-bold text-white uppercase font-heading tracking-wider">Habilitar Venda de Fotos</span>
+                                        <p className="text-xs text-gray-400 font-medium mt-1">Ao marcar, este evento oferecerá a opção de comprar as fotos do álbum no checkout.</p>
+                                    </div>
+                                </label>
                             </div>
 
                             <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-brand-red/20">
