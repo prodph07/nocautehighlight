@@ -339,12 +339,32 @@ export function MyAccountPage() {
                                             )}
                                             {item.production_status === 'in_production' && (
                                                 <>
-                                                    <div className="w-full py-2.5 bg-brand-dark border border-brand-red/10 text-brand-orange rounded-lg font-bold text-center text-sm cursor-not-allowed uppercase font-heading">
-                                                        Aguarde... Equipando luvas!
-                                                    </div>
+                                                    {!item.delivered_video_url && !item.delivered_photo_url && (
+                                                        <div className="w-full py-2.5 bg-brand-dark border border-brand-red/10 text-brand-orange rounded-lg font-bold text-center text-sm cursor-not-allowed uppercase font-heading">
+                                                            Aguarde... Equipando luvas!
+                                                        </div>
+                                                    )}
+                                                    {item.delivered_video_url && (
+                                                        <button
+                                                            onClick={() => handleWatchDelivered(item.delivered_video_url || '#')}
+                                                            className="w-full py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mb-2"
+                                                        >
+                                                            <ExternalLink className="w-4 h-4" />
+                                                            Acessar Vídeo
+                                                        </button>
+                                                    )}
+                                                    {item.delivered_photo_url && (
+                                                        <button
+                                                            onClick={() => handleWatchDelivered(item.delivered_photo_url || '#')}
+                                                            className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mb-2"
+                                                        >
+                                                            <ExternalLink className="w-4 h-4" />
+                                                            Acessar Fotos
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => handleOpenModal(item)}
-                                                        className="w-full py-2 text-sm text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 transition-colors uppercase font-heading tracking-wider"
+                                                        className="w-full py-2 text-sm text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 transition-colors uppercase font-heading tracking-wider mt-2"
                                                     >
                                                         <Edit3 className="w-4 h-4" />
                                                         Alterar Informações

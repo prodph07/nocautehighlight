@@ -108,26 +108,96 @@ export function AdminProductionPage() {
         }));
     };
 
-    const handleDeliver = async (itemId: string, accessLevel: string) => {
+    const handleDeliverVideo = async (itemId: string, accessLevel: string) => {
+        let url = deliveryUrls[itemId] || '';
+        if (!url.trim()) {
+            alert('Por favor, insira o link do vídeo finalizado.');
+            return;
+        }
+
+        url = url.trim();
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = `https://${url}`;
+        }
+
+        setUpdatingId(itemId);
+        try {
+            const updatePayload: any = { delivered_video_url: url };
+            
+            const needsPhoto = accessLevel.includes('photo');
+            const photoUrl = deliveryPhotoUrls[itemId] || '';
+            
+            if (!needsPhoto || (needsPhoto && photoUrl.trim())) {
+                updatePayload.production_status = 'delivered';
+            }
+
+            const { error } = await supabase
+                .from('order_items')
+                .update(updatePayload)
+                .eq('id', itemId);
+
+            if (error) throw error;
+
+            alert(updatePayload.production_status === 'delivered' ? 'Entregue com sucesso! O cliente já pode acessar.' : 'Vídeo salvo e liberado para o cliente!');
+            await loadProductions();
+        } catch (error: any) {
+            console.error('Error delivering video:', error);
+            alert('Erro ao entregar o vídeo: ' + error.message);
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const handleDeliverPhotos = async (itemId: string, accessLevel: string) => {
+        let photoUrl = deliveryPhotoUrls[itemId] || '';
+        if (!photoUrl.trim()) {
+            alert('Por favor, insira o link da pasta de fotos.');
+            return;
+        }
+
+        photoUrl = photoUrl.trim();
+        if (!photoUrl.startsWith('http://') && !photoUrl.startsWith('https://')) {
+            photoUrl = `https://${photoUrl}`;
+        }
+
+        setUpdatingId(itemId);
+        try {
+            const updatePayload: any = { delivered_photo_url: photoUrl };
+            
+            const needsVideo = accessLevel !== 'photo_only';
+            const url = deliveryUrls[itemId] || '';
+            
+            if (!needsVideo || (needsVideo && url.trim())) {
+                updatePayload.production_status = 'delivered';
+            }
+
+            const { error } = await supabase
+                .from('order_items')
+                .update(updatePayload)
+                .eq('id', itemId);
+
+            if (error) throw error;
+
+            alert(updatePayload.production_status === 'delivered' ? 'Entregue com sucesso! O cliente já pode acessar.' : 'Fotos salvas e liberadas para o cliente!');
+            await loadProductions();
+        } catch (error: any) {
+            console.error('Error delivering photos:', error);
+            alert('Erro ao entregar as fotos: ' + error.message);
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const handleUpdateLinks = async (itemId: string, accessLevel: string) => {
         let url = deliveryUrls[itemId] || '';
         let photoUrl = deliveryPhotoUrls[itemId] || '';
 
         const needsVideo = accessLevel !== 'photo_only';
         const needsPhoto = accessLevel.includes('photo');
 
-        if (needsVideo && !url.trim()) {
-            alert('Por favor, insira o link do vídeo finalizado.');
-            return;
-        }
-
-        if (needsPhoto && !photoUrl.trim()) {
-            alert('Por favor, insira o link da pasta de fotos.');
-            return;
-        }
-
         if (needsVideo) {
             url = url.trim();
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
                 url = `https://${url}`;
             }
         } else {
@@ -136,7 +206,7 @@ export function AdminProductionPage() {
 
         if (needsPhoto) {
             photoUrl = photoUrl.trim();
-            if (!photoUrl.startsWith('http://') && !photoUrl.startsWith('https://')) {
+            if (photoUrl && !photoUrl.startsWith('http://') && !photoUrl.startsWith('https://')) {
                 photoUrl = `https://${photoUrl}`;
             }
         } else {
@@ -145,7 +215,7 @@ export function AdminProductionPage() {
 
         setUpdatingId(itemId);
         try {
-            const updatePayload: any = { production_status: 'delivered' };
+            const updatePayload: any = {};
             if (needsVideo) updatePayload.delivered_video_url = url;
             if (needsPhoto) updatePayload.delivered_photo_url = photoUrl;
 
@@ -156,11 +226,11 @@ export function AdminProductionPage() {
 
             if (error) throw error;
 
-            alert('Entregue com sucesso! O cliente já pode acessar.');
-            await loadProductions(); // Reload list
+            alert('Links atualizados com sucesso!');
+            await loadProductions();
         } catch (error: any) {
-            console.error('Error delivering item:', error);
-            alert('Erro ao entregar o pedido: ' + error.message);
+            console.error('Error updating links:', error);
+            alert('Erro ao atualizar os links: ' + error.message);
         } finally {
             setUpdatingId(null);
         }
@@ -676,19 +746,35 @@ export function AdminProductionPage() {
                                                                         </div>
                                                                     )}
 
-                                                                    <div className="flex justify-end">
-                                                                        <button
-                                                                            onClick={() => handleDeliver(item.id, item.access_level)}
-                                                                            disabled={updatingId === item.id}
-                                                                            className="w-full md:w-auto justify-center px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] transition-all flex items-center gap-3 disabled:opacity-50"
-                                                                        >
-                                                                            {updatingId === item.id ? (
-                                                                                <Loader2 className="w-5 h-5 animate-spin" />
-                                                                            ) : (
-                                                                                <Send className="w-5 h-5" />
-                                                                            )}
-                                                                            Entregar Pedido
-                                                                        </button>
+                                                                    <div className="flex flex-col sm:flex-row justify-end gap-3">
+                                                                        {item.access_level !== 'photo_only' && (
+                                                                            <button
+                                                                                onClick={() => handleDeliverVideo(item.id, item.access_level)}
+                                                                                disabled={updatingId === item.id}
+                                                                                className="w-full sm:w-auto justify-center px-6 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] transition-all flex items-center gap-3 disabled:opacity-50"
+                                                                            >
+                                                                                {updatingId === item.id ? (
+                                                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                                                ) : (
+                                                                                    <Send className="w-5 h-5" />
+                                                                                )}
+                                                                                Entregar Vídeo
+                                                                            </button>
+                                                                        )}
+                                                                        {item.access_level?.includes('photo') && (
+                                                                            <button
+                                                                                onClick={() => handleDeliverPhotos(item.id, item.access_level)}
+                                                                                disabled={updatingId === item.id}
+                                                                                className="w-full sm:w-auto justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all flex items-center gap-3 disabled:opacity-50"
+                                                                            >
+                                                                                {updatingId === item.id ? (
+                                                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                                                ) : (
+                                                                                    <Send className="w-5 h-5" />
+                                                                                )}
+                                                                                Entregar Fotos
+                                                                            </button>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -820,7 +906,7 @@ export function AdminProductionPage() {
                                                                             
                                                                             <div className="flex justify-end">
                                                                                 <button
-                                                                                    onClick={() => handleDeliver(item.id, item.access_level)}
+                                                                                    onClick={() => handleUpdateLinks(item.id, item.access_level)}
                                                                                     disabled={updatingId === item.id}
                                                                                     className="w-full md:w-auto justify-center px-8 py-3 bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-lg font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all flex items-center gap-3 disabled:opacity-50"
                                                                                 >
