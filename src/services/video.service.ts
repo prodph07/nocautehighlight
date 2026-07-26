@@ -115,18 +115,17 @@ export const VideoService = {
                     payment_method,
                     pix_qr_code,
                     pix_qr_code_url,
-                        order_items (
-                            id,
-                            order_id,
-                            access_level,
-                            production_status,
-                            production_form_data,
-                            delivered_video_url,
-                            delivered_photo_url,
-                            delivered_full_fight_url,
-                            videos ( title )
-                        )
-                    `)
+                    order_items (
+                        id,
+                        order_id,
+                        access_level,
+                        production_status,
+                        production_form_data,
+                        delivered_video_url,
+                        delivered_photo_url,
+                        videos ( title )
+                    )
+                `)
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false });
 

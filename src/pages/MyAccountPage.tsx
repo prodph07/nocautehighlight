@@ -339,7 +339,7 @@ export function MyAccountPage() {
                                             )}
                                             {item.production_status === 'in_production' && (
                                                 <>
-                                                    {!item.delivered_video_url && !item.delivered_photo_url && (
+                                                    {!item.delivered_video_url && !item.delivered_photo_url && !(item.delivered_full_fight_url || (item.production_form_data as any)?.delivered_full_fight_url) && (
                                                         <div className="w-full py-2.5 bg-brand-dark border border-brand-red/10 text-brand-orange rounded-lg font-bold text-center text-sm cursor-not-allowed uppercase font-heading">
                                                             Aguarde... Equipando luvas!
                                                         </div>
