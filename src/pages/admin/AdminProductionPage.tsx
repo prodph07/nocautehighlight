@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Video, ExternalLink, RefreshCw, Send, Plus, Search, X, ArrowUpDown, User } from 'lucide-react';
+import { Loader2, Video, ExternalLink, RefreshCw, Send, Plus, Search, X, ArrowUpDown, User, Clock } from 'lucide-react';
+import { calculateDeliveryDeadline } from '../../utils/businessDays';
 
 export function AdminProductionPage() {
     const [loading, setLoading] = useState(true);
@@ -12,6 +13,7 @@ export function AdminProductionPage() {
     const [deliveryFullFightUrls, setDeliveryFullFightUrls] = useState<{ [key: string]: string }>({});
     const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
     const [editingDelivered, setEditingDelivered] = useState<Record<string, boolean>>({});
+    const [eventSortBy, setEventSortBy] = useState<'newest' | 'oldest' | 'title_asc' | 'sales_desc' | 'sales_asc'>('newest');
 
     // Manual Addition States
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -586,6 +588,30 @@ export function AdminProductionPage() {
         }, {} as Record<string, GroupedEvent>)
     );
 
+    const sortedGroupedProductions = useMemo(() => {
+        return [...groupedProductions].sort((a, b) => {
+            const totalA = a.pending.length + a.delivered.length;
+            const totalB = b.pending.length + b.delivered.length;
+            const newestA = Math.max(...[...a.pending, ...a.delivered].map(i => new Date(i.orders?.created_at || 0).getTime()), 0);
+            const newestB = Math.max(...[...b.pending, ...b.delivered].map(i => new Date(i.orders?.created_at || 0).getTime()), 0);
+
+            switch (eventSortBy) {
+                case 'newest':
+                    return newestB - newestA;
+                case 'oldest':
+                    return newestA - newestB;
+                case 'sales_desc':
+                    return totalB - totalA;
+                case 'sales_asc':
+                    return totalA - totalB;
+                case 'title_asc':
+                    return a.eventTitle.localeCompare(b.eventTitle);
+                default:
+                    return 0;
+            }
+        });
+    }, [groupedProductions, eventSortBy]);
+
     const getAccessLevelBadge = (accessLevel: string) => {
         switch(accessLevel) {
             case 'highlight_only': return { label: 'Highlight', style: 'bg-blue-900/40 text-blue-400 border-blue-500/30' };
@@ -599,22 +625,38 @@ export function AdminProductionPage() {
 
     return (
         <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-black font-heading uppercase italic tracking-widest text-white">Fila de <span className="text-brand-orange">Produção</span></h1>
                     <p className="text-gray-400 mt-1 font-medium">Gerencie os pedidos de highlight separados por evento.</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    {/* Event Sequence Sort Dropdown */}
+                    <div className="flex items-center gap-2 bg-brand-dark px-3 py-2 rounded-xl border border-brand-red/20 shrink-0">
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider hidden sm:inline">Ordem dos Eventos:</span>
+                        <select
+                            value={eventSortBy}
+                            onChange={(e) => setEventSortBy(e.target.value as any)}
+                            className="bg-black text-white border border-gray-700 rounded-lg px-2.5 py-1 text-xs font-bold uppercase tracking-wider outline-none focus:border-brand-orange cursor-pointer"
+                        >
+                            <option value="newest">Mais Recentes Primeiro</option>
+                            <option value="oldest">Mais Antigos Primeiro</option>
+                            <option value="sales_desc">Maior Nº de Vendas</option>
+                            <option value="sales_asc">Menor Nº de Vendas</option>
+                            <option value="title_asc">Nome do Evento (A - Z)</option>
+                        </select>
+                    </div>
+
                     <button
                         onClick={() => setIsAddModalOpen(true)}
-                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase tracking-widest text-sm hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all w-full sm:w-auto"
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase tracking-widest text-xs hover:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all shrink-0"
                     >
                         <Plus className="w-4 h-4" />
                         Adicionar Manualmente
                     </button>
                     <button
                         onClick={loadProductions}
-                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-dark border border-brand-red/20 rounded-xl text-gray-300 hover:text-white hover:border-brand-orange transition-colors font-bold uppercase tracking-wider text-sm w-full sm:w-auto"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-dark border border-brand-red/20 rounded-xl text-gray-300 hover:text-white hover:border-brand-orange transition-colors font-bold uppercase tracking-wider text-xs shrink-0"
                     >
                         <RefreshCw className="w-4 h-4" />
                         Atualizar
@@ -622,13 +664,13 @@ export function AdminProductionPage() {
                 </div>
             </div>
 
-            {groupedProductions.length === 0 ? (
+            {sortedGroupedProductions.length === 0 ? (
                 <div className="bg-black p-8 rounded-2xl border border-brand-red/20 text-center text-gray-500 font-bold uppercase tracking-widest italic flex items-center justify-center min-h-[200px] shadow-lg">
                     Nenhum vídeo na fila de edição ou entregue no momento.
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {groupedProductions.map(group => {
+                    {sortedGroupedProductions.map(group => {
                         const isExpanded = expandedEvents[group.eventId];
                         const total = group.pending.length + group.delivered.length;
 
@@ -714,6 +756,19 @@ export function AdminProductionPage() {
                                                                                     {item.access_level === 'photo_only' ? 'Aguardando Fotos' : 'Em Edição'}
                                                                                 </span>
                                                                             )}
+                                                                            {/* Badge de Prazo de Entrega (7 Dias Úteis) */}
+                                                                            {item.orders?.created_at && (() => {
+                                                                                const deadline = calculateDeliveryDeadline(item.orders.created_at, 7);
+                                                                                return (
+                                                                                    <span
+                                                                                        className={`px-2.5 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider border flex items-center gap-1.5 ${deadline.badgeStyle}`}
+                                                                                        title={`Prazo máximo de entrega (7 dias úteis): ${deadline.deadlineDate.toLocaleDateString('pt-BR')}`}
+                                                                                    >
+                                                                                        <Clock className="w-3.5 h-3.5" />
+                                                                                        <span>Prazo: {deadline.label}</span>
+                                                                                    </span>
+                                                                                );
+                                                                            })()}
                                                                             {item.editor_name && (
                                                                                 <span className="px-2.5 py-0.5 bg-purple-900/40 text-purple-400 border border-purple-500/30 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1">
                                                                                     Editando: {item.editor_name}
