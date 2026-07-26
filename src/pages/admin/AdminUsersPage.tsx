@@ -437,18 +437,80 @@ export function AdminUsersPage() {
                     </div>
 
                     {/* Event Filter Toggle Button */}
-                    <button
-                        onClick={() => setIsEventFilterOpen(!isEventFilterOpen)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border shrink-0 ${
-                            selectedEvents.length > 0
-                                ? 'bg-purple-900/40 text-purple-300 border-purple-500/50 shadow-[0_0_12px_rgba(168,85,247,0.3)]'
-                                : 'bg-brand-dark text-gray-300 border-gray-700 hover:border-gray-500'
-                        }`}
-                    >
-                        <Calendar className="w-4 h-4 text-purple-400" />
-                        <span>{selectedEvents.length === 0 ? 'Filtrar por Evento' : `${selectedEvents.length} Evento(s)`}</span>
-                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isEventFilterOpen ? 'rotate-180' : ''}`} />
-                    </button>
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsEventFilterOpen(!isEventFilterOpen)}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border shrink-0 ${
+                                selectedEvents.length > 0
+                                    ? 'bg-purple-900/40 text-purple-300 border-purple-500/50 shadow-[0_0_12px_rgba(168,85,247,0.3)]'
+                                    : 'bg-brand-dark text-gray-300 border-gray-700 hover:border-gray-500'
+                            }`}
+                        >
+                            <Calendar className="w-4 h-4 text-purple-400" />
+                            <span>{selectedEvents.length === 0 ? 'Filtrar por Evento' : `${selectedEvents.length} Evento(s)`}</span>
+                            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isEventFilterOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {/* Floating Event Selection Drawer */}
+                        {isEventFilterOpen && (
+                            <div className="absolute right-0 lg:left-0 lg:right-auto mt-2 w-[300px] sm:w-[400px] md:w-[500px] bg-brand-dark p-5 rounded-2xl border border-purple-500/50 shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-50 animate-fadeIn origin-top">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-800 pb-3 mb-4 gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <Layers className="w-4 h-4 text-purple-400" />
+                                        <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                                            Selecione Eventos
+                                        </h4>
+                                    </div>
+                                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                                        <button
+                                            onClick={selectAllEvents}
+                                            className="text-[10px] text-gray-300 hover:text-white font-bold uppercase tracking-wider px-2.5 py-1 bg-black rounded border border-gray-700 transition-colors"
+                                        >
+                                            Todos
+                                        </button>
+                                        {selectedEvents.length > 0 && (
+                                            <button
+                                                onClick={clearEventSelection}
+                                                className="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-wider px-2.5 py-1 bg-red-950/40 rounded border border-red-500/30 transition-colors"
+                                            >
+                                                Limpar ({selectedEvents.length})
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => setIsEventFilterOpen(false)}
+                                            className="ml-1 text-gray-400 hover:text-white"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {availableEvents.length === 0 ? (
+                                    <p className="text-xs text-gray-500 italic">Nenhum evento encontrado.</p>
+                                ) : (
+                                    <div className="flex flex-wrap gap-2 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                                        {availableEvents.map(evtName => {
+                                            const isSelected = selectedEvents.includes(evtName);
+                                            return (
+                                                <button
+                                                    key={evtName}
+                                                    onClick={() => toggleEventSelection(evtName)}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border ${
+                                                        isSelected
+                                                            ? 'bg-purple-600 text-white border-purple-400 shadow-[0_0_10px_rgba(147,51,234,0.4)]'
+                                                            : 'bg-black text-gray-400 border-gray-800 hover:border-gray-700 hover:text-white'
+                                                    }`}
+                                                >
+                                                    {isSelected ? <CheckSquare className="w-3.5 h-3.5 shrink-0" /> : <Square className="w-3.5 h-3.5 shrink-0 opacity-50" />}
+                                                    <span className="text-left line-clamp-1">{evtName}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Sorting Select */}
                     <select
@@ -464,60 +526,6 @@ export function AdminUsersPage() {
                     </select>
                 </div>
             </div>
-
-            {/* Collapsible Event Selection Drawer Panel */}
-            {isEventFilterOpen && (
-                <div className="bg-brand-dark p-5 rounded-2xl border border-purple-500/30 space-y-4 shadow-xl animate-fadeIn">
-                    <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-                        <div className="flex items-center gap-2">
-                            <Layers className="w-4 h-4 text-purple-400" />
-                            <h4 className="text-xs font-black uppercase tracking-wider text-white">
-                                Selecione as edições/eventos para somar e comparar
-                            </h4>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={selectAllEvents}
-                                className="text-[10px] text-gray-300 hover:text-white font-bold uppercase tracking-wider px-2.5 py-1 bg-black rounded border border-gray-700 transition-colors"
-                            >
-                                Marcar Todos
-                            </button>
-                            {selectedEvents.length > 0 && (
-                                <button
-                                    onClick={clearEventSelection}
-                                    className="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-wider px-2.5 py-1 bg-red-950/40 rounded border border-red-500/30 transition-colors"
-                                >
-                                    Limpar ({selectedEvents.length})
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {availableEvents.length === 0 ? (
-                        <p className="text-xs text-gray-500 italic">Nenhum evento encontrado.</p>
-                    ) : (
-                        <div className="flex flex-wrap gap-2">
-                            {availableEvents.map(evtName => {
-                                const isSelected = selectedEvents.includes(evtName);
-                                return (
-                                    <button
-                                        key={evtName}
-                                        onClick={() => toggleEventSelection(evtName)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border ${
-                                            isSelected
-                                                ? 'bg-purple-600 text-white border-purple-400 shadow-[0_0_10px_rgba(147,51,234,0.4)]'
-                                                : 'bg-black text-gray-400 border-gray-800 hover:border-gray-700 hover:text-white'
-                                        }`}
-                                    >
-                                        {isSelected ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5 opacity-50" />}
-                                        <span>{evtName}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            )}
 
             {/* Event Sum Banner (Soma de Eventos) - Only shown when events are selected */}
             {selectedEvents.length > 0 && (

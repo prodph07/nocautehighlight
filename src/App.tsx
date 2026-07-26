@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const HomePage = lazy(() => import('./pages/HomePage').then(module => ({ default: module.HomePage })));
 const VideoDetailsPage = lazy(() => import('./pages/VideoDetailsPage').then(module => ({ default: module.VideoDetailsPage })));
@@ -34,37 +35,39 @@ const PageLoader = () => (
 
 function App() {
   return (
-    <Router>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/update-password" element={<UpdatePasswordPage />} />
-          <Route path="/event/:slug" element={<EventDetailsPage />} />
-          <Route path="/video/:slug" element={<VideoDetailsPage />} />
-          <Route path="/checkout" element={<PaymentPage />} />
-          <Route path="/minha-conta" element={<MyAccountPage />} />
-          <Route path="/ajuda" element={<HelpPage />} />
-          <Route path="/termos" element={<TermsPage />} />
+    <ErrorBoundary>
+      <Router>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/update-password" element={<UpdatePasswordPage />} />
+            <Route path="/event/:slug" element={<EventDetailsPage />} />
+            <Route path="/video/:slug" element={<VideoDetailsPage />} />
+            <Route path="/checkout" element={<PaymentPage />} />
+            <Route path="/minha-conta" element={<MyAccountPage />} />
+            <Route path="/ajuda" element={<HelpPage />} />
+            <Route path="/termos" element={<TermsPage />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminRoute />}>
-            <Route element={<AdminLayout />}>
-              <Route index element={<AdminDashboardPage />} />
-              <Route path="events" element={<AdminEventsPage />} />
-              <Route path="events/:eventId/videos" element={<AdminEventVideosPage />} />
-              <Route path="users" element={<AdminUsersPage />} />
-              <Route path="production" element={<AdminProductionPage />} />
-              <Route path="orders" element={<AdminOrdersPage />} />
-              <Route path="coupons" element={<AdminCouponsPage />} />
-              <Route path="settings" element={<AdminSettingsPage />} />
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route index element={<AdminDashboardPage />} />
+                <Route path="events" element={<AdminEventsPage />} />
+                <Route path="events/:eventId/videos" element={<AdminEventVideosPage />} />
+                <Route path="users" element={<AdminUsersPage />} />
+                <Route path="production" element={<AdminProductionPage />} />
+                <Route path="orders" element={<AdminOrdersPage />} />
+                <Route path="coupons" element={<AdminCouponsPage />} />
+                <Route path="settings" element={<AdminSettingsPage />} />
+              </Route>
             </Route>
-          </Route>
-        </Routes>
-      </Suspense>
-    </Router>
+          </Routes>
+        </Suspense>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

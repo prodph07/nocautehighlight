@@ -531,7 +531,9 @@ export function AdminProductionPage() {
                 .insert({
                     order_id: orderData.id,
                     video_id: manualVideoId,
-                    access_level: manualAccessLevel
+                    access_level: manualAccessLevel,
+                    production_status: 'pending',
+                    production_form_data: {}
                 });
 
             if (itemError) {
