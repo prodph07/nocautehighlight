@@ -68,6 +68,7 @@ export interface OrderItem {
     production_form_data?: ProductionFormData;
     delivered_video_url?: string;
     delivered_photo_url?: string;
+    delivered_full_fight_url?: string;
     editor_id?: string;
     editor_name?: string;
     videos?: Video;

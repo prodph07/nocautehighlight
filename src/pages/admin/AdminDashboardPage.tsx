@@ -1,18 +1,20 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
-import { DollarSign, Video, Users, TrendingUp, Calendar, MessageCircle, AlertCircle, ShoppingCart, RefreshCw, Loader2 } from 'lucide-react';
+import { DollarSign, Video, Users, TrendingUp, Calendar, ShoppingCart, Loader2 } from 'lucide-react';
 import { useOutletContext, Navigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays, startOfMonth, startOfToday, isAfter, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-type DateFilter = 'today' | '7days' | '30days' | 'month' | 'all';
+type DateFilter = 'today' | '7days' | '30days' | 'month' | 'custom' | 'all';
 
 export function AdminDashboardPage() {
     const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
 
     const [loading, setLoading] = useState(true);
     const [dateFilter, setDateFilter] = useState<DateFilter>('30days');
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
     
     // Raw Data state
     const [allVideos, setAllVideos] = useState<any[]>([]);
@@ -71,6 +73,16 @@ export function AdminDashboardPage() {
         let cutoffDate = new Date();
         const today = startOfToday();
 
+        if (dateFilter === 'custom') {
+            if (!startDate && !endDate) return allPaidOrders;
+            return allPaidOrders.filter(order => {
+                const orderDate = parseISO(order.created_at);
+                if (startDate && orderDate < new Date(`${startDate}T00:00:00`)) return false;
+                if (endDate && orderDate > new Date(`${endDate}T23:59:59.999`)) return false;
+                return true;
+            });
+        }
+
         switch (dateFilter) {
             case 'today': cutoffDate = today; break;
             case '7days': cutoffDate = subDays(today, 7); break;
@@ -79,7 +91,7 @@ export function AdminDashboardPage() {
         }
 
         return allPaidOrders.filter(order => isAfter(parseISO(order.created_at), cutoffDate));
-    }, [allPaidOrders, dateFilter]);
+    }, [allPaidOrders, dateFilter, startDate, endDate]);
 
     // Calculate Top Level Stats
     const stats = useMemo(() => {
@@ -142,54 +154,6 @@ export function AdminDashboardPage() {
 
     }, [filteredOrders, allOrderItems, allVideos]);
 
-    // Calculate Opportunities (LIFETIME data, ignoring date filter)
-    const opportunitiesData = useMemo(() => {
-        const salesMap: Record<string, any[]> = {};
-        allVideos.forEach(v => salesMap[v.id] = []);
-
-        // Populate sales map
-        allOrderItems.forEach(item => {
-            if (salesMap[item.video_id]) {
-                salesMap[item.video_id].push(item);
-            }
-        });
-
-        const groupedByEvent: Record<string, { unsold: any[], singleSale: any[] }> = {};
-
-        allVideos.forEach(video => {
-            const eventName = video.event_name || 'Eventos Desconhecidos';
-            if (!groupedByEvent[eventName]) {
-                groupedByEvent[eventName] = { unsold: [], singleSale: [] };
-            }
-
-            const items = salesMap[video.id];
-            if (items.length === 0) {
-                groupedByEvent[eventName].unsold.push(video);
-            } else if (items.length === 1) {
-                const item = items[0];
-                const profile = item.orders?.profiles || {};
-                const formData = item.production_form_data || {};
-                
-                groupedByEvent[eventName].singleSale.push({
-                    video,
-                    buyerData: {
-                        name: profile.full_name || 'Desconhecido',
-                        whatsapp: profile.whatsapp || null,
-                        fighterName: formData.fighterName || null
-                    }
-                });
-            }
-        });
-
-        // Ensure sorted inside each event
-        Object.values(groupedByEvent).forEach(group => {
-            group.unsold.sort((a, b) => a.title.localeCompare(b.title));
-            group.singleSale.sort((a, b) => a.video.title.localeCompare(b.video.title));
-        });
-
-        return groupedByEvent;
-    }, [allVideos, allOrderItems]);
-
     // Formatters
     const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
@@ -205,10 +169,6 @@ export function AdminDashboardPage() {
             <p className="text-2xl font-black font-heading tracking-widest text-white mt-1 relative z-10">{value}</p>
         </div>
     );
-
-    const formatPhoneForLink = (phone: string) => {
-        return phone.replace(/\D/g, ''); // só números
-    };
 
     if (!isAdmin) return <Navigate to="/admin/production" replace />;
 
@@ -226,30 +186,65 @@ export function AdminDashboardPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
                 <div>
                     <h2 className="text-3xl font-black font-heading uppercase italic tracking-widest text-white">Dashboard <span className="text-brand-orange">Geral</span></h2>
-                    <p className="text-gray-400 mt-1 font-medium">Acompanhe métricas, faturamento e descubra novas oportunidades de venda.</p>
+                    <p className="text-gray-400 mt-1 font-medium">Acompanhe métricas e o faturamento detalhado da plataforma.</p>
                 </div>
 
                 {/* Date Filters */}
-                <div className="flex flex-wrap gap-2">
-                    {[
-                        { id: 'today', label: 'Hoje' },
-                        { id: '7days', label: '7 Dias' },
-                        { id: '30days', label: '30 Dias' },
-                        { id: 'month', label: 'Este Mês' },
-                        { id: 'all', label: 'Tudo' }
-                    ].map(f => (
-                        <button
-                            key={f.id}
-                            onClick={() => setDateFilter(f.id as DateFilter)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
-                                dateFilter === f.id 
-                                ? 'bg-brand-orange text-white border-brand-orange shadow-[0_0_15px_rgba(249,115,22,0.4)]' 
-                                : 'bg-black text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'
-                            }`}
-                        >
-                            {f.label}
-                        </button>
-                    ))}
+                <div className="flex flex-col items-start md:items-end gap-3">
+                    <div className="flex flex-wrap gap-2">
+                        {[
+                            { id: 'today', label: 'Hoje' },
+                            { id: '7days', label: '7 Dias' },
+                            { id: '30days', label: '30 Dias' },
+                            { id: 'month', label: 'Este Mês' },
+                            { id: 'custom', label: 'Personalizado' },
+                            { id: 'all', label: 'Tudo' }
+                        ].map(f => (
+                            <button
+                                key={f.id}
+                                onClick={() => setDateFilter(f.id as DateFilter)}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                                    dateFilter === f.id 
+                                    ? 'bg-brand-orange text-white border-brand-orange shadow-[0_0_15px_rgba(249,115,22,0.4)]' 
+                                    : 'bg-black text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'
+                                }`}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Inputs de Data Personalizada */}
+                    {dateFilter === 'custom' && (
+                        <div className="flex flex-wrap items-center gap-3 bg-black p-3 rounded-xl border border-brand-red/20 w-full md:w-auto">
+                            <div className="flex items-center gap-2 text-xs text-gray-400 font-bold uppercase">
+                                <span>De:</span>
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="bg-brand-dark border border-gray-700 text-white rounded-lg px-3 py-1.5 text-xs outline-none focus:border-brand-orange"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-400 font-bold uppercase">
+                                <span>Até:</span>
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="bg-brand-dark border border-gray-700 text-white rounded-lg px-3 py-1.5 text-xs outline-none focus:border-brand-orange"
+                                />
+                            </div>
+                            {(startDate || endDate) && (
+                                <button
+                                    onClick={() => { setStartDate(''); setEndDate(''); }}
+                                    className="text-xs text-brand-orange hover:underline font-bold uppercase tracking-wider px-2"
+                                >
+                                    Limpar
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -344,109 +339,6 @@ export function AdminDashboardPage() {
                 </div>
             </div>
 
-            {/* Opportunities Section */}
-            <div className="bg-black p-6 rounded-2xl shadow-[0_0_20px_rgba(220,38,38,0.1)] border border-brand-red/20 mt-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6 border-b border-gray-800 pb-6">
-                    <div>
-                        <div className="flex items-center gap-3 mb-1">
-                            <AlertCircle className="w-6 h-6 text-brand-orange" />
-                            <h3 className="text-2xl font-black font-heading uppercase italic tracking-widest text-white">Oportunidades de <span className="text-brand-orange">Venda</span></h3>
-                        </div>
-                        <p className="text-gray-400 text-sm font-medium">Lutas com 1 ou nenhuma venda. Aborde o oponente para maximizar seu lucro.</p>
-                    </div>
-                    <button onClick={loadRawData} className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold uppercase tracking-wider px-4 py-2 rounded-lg flex items-center gap-2 border border-gray-600 transition-colors">
-                        <RefreshCw className="w-3.5 h-3.5" /> Atualizar Radar
-                    </button>
-                </div>
-
-                <div className="space-y-6">
-                    {Object.entries(opportunitiesData)
-                        .sort(([eventA], [eventB]) => eventA.localeCompare(eventB))
-                        .map(([eventName, group], eventIndex) => {
-                            if (group.unsold.length === 0 && group.singleSale.length === 0) return null;
-
-                            return (
-                                <div key={eventIndex} className="bg-brand-dark/40 rounded-2xl border border-gray-800 p-6 shadow-inner">
-                                    <h4 className="flex items-center gap-3 text-xl font-black text-white font-heading uppercase italic tracking-widest mb-6 border-b border-gray-800 pb-4">
-                                        <Calendar className="w-5 h-5 text-brand-orange" />
-                                        {eventName}
-                                    </h4>
-
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                        
-                                        {/* 1 Sale Column */}
-                                        <div>
-                                            <h5 className="flex items-center gap-2 font-black text-sm text-gray-300 font-heading uppercase tracking-widest mb-4">
-                                                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-sans border border-blue-500/30">1</span>
-                                                Apenas Uma Venda
-                                                <span className="ml-auto text-xs text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded font-sans">{group.singleSale.length} lutas</span>
-                                            </h5>
-                                            
-                                            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                                                {group.singleSale.length === 0 ? (
-                                                    <p className="text-gray-500 italic text-xs p-3 text-center border border-gray-800 rounded-lg border-dashed">Nenhuma oportunidade na categoria.</p>
-                                                ) : (
-                                                    group.singleSale.map((item, i) => (
-                                                        <div key={i} className="bg-black rounded-lg border border-gray-800 p-4 transition-all hover:border-blue-500/30 group">
-                                                            <p className="text-white font-bold text-sm tracking-wide uppercase line-clamp-2 mb-3">{item.video.title}</p>
-                                                            
-                                                            <div className="bg-brand-dark/80 p-3 rounded-md border border-gray-800">
-                                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Dados do Comprador</p>
-                                                                <p className="text-xs text-gray-300"><span className="text-gray-500">Perfil:</span> {item.buyerData.name}</p>
-                                                                {item.buyerData.fighterName && (
-                                                                    <p className="text-xs text-gray-300 mt-1"><span className="text-gray-500">Lutador:</span> <strong className="text-white">{item.buyerData.fighterName}</strong></p>
-                                                                )}
-                                                            </div>
-
-                                                            {item.buyerData.whatsapp ? (
-                                                                <a 
-                                                                    href={`https://wa.me/${formatPhoneForLink(item.buyerData.whatsapp)}?text=Olá ${item.buyerData.name}, vi que você adquiriu o highlight da luta da sua equipe. Gostaria de oferecer a edição para o seu oponente também?`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="mt-3 w-full py-2 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors"
-                                                                >
-                                                                    <MessageCircle className="w-4 h-4" />
-                                                                    Abordar no WhatsApp
-                                                                </a>
-                                                            ) : (
-                                                                <div className="mt-3 w-full py-2 bg-gray-800 text-gray-500 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-gray-700">
-                                                                    WhatsApp Indisponível
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* 0 Sales Column */}
-                                        <div>
-                                            <h5 className="flex items-center gap-2 font-black text-sm text-gray-300 font-heading uppercase tracking-widest mb-4">
-                                                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-red-500/20 text-red-400 text-xs font-sans border border-red-500/30">0</span>
-                                                Nenhuma Venda
-                                                <span className="ml-auto text-xs text-red-400 bg-red-900/30 px-2 py-0.5 rounded font-sans">{group.unsold.length} lutas</span>
-                                            </h5>
-                                            
-                                            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                                                {group.unsold.length === 0 ? (
-                                                    <p className="text-gray-500 italic text-xs p-3 text-center border border-gray-800 rounded-lg border-dashed">Todas as lutas já tiveram vendas!</p>
-                                                ) : (
-                                                    group.unsold.map((video, i) => (
-                                                        <div key={i} className="bg-black rounded-lg border border-gray-800 p-4 transition-all hover:border-red-500/30">
-                                                            <p className="text-white font-bold text-sm tracking-wide uppercase line-clamp-2">{video.title}</p>
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            );
-                    })}
-                </div>
-            </div>
-
             {/* Custom Styles for Scrollbar inside component for isolation */}
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar {
@@ -466,3 +358,4 @@ export function AdminDashboardPage() {
         </div>
     );
 }
+

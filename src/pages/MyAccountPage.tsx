@@ -350,7 +350,16 @@ export function MyAccountPage() {
                                                             className="w-full py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mb-2"
                                                         >
                                                             <ExternalLink className="w-4 h-4" />
-                                                            Acessar Vídeo
+                                                            Acessar Highlight
+                                                        </button>
+                                                    )}
+                                                    {(item.delivered_full_fight_url || (item.production_form_data as any)?.delivered_full_fight_url) && (
+                                                        <button
+                                                            onClick={() => handleWatchDelivered(item.delivered_full_fight_url || (item.production_form_data as any)?.delivered_full_fight_url || '#')}
+                                                            className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mb-2 shadow-md"
+                                                        >
+                                                            <ExternalLink className="w-4 h-4" />
+                                                            Acessar Luta na Íntegra
                                                         </button>
                                                     )}
                                                     {item.delivered_photo_url && (
@@ -376,16 +385,25 @@ export function MyAccountPage() {
                                                     {item.delivered_video_url && (
                                                         <button
                                                             onClick={() => handleWatchDelivered(item.delivered_video_url || '#')}
-                                                            className="w-full py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                                                            className="w-full py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mb-2"
                                                         >
                                                             <ExternalLink className="w-4 h-4" />
-                                                            Acessar Vídeo
+                                                            Acessar Highlight
+                                                        </button>
+                                                    )}
+                                                    {(item.delivered_full_fight_url || (item.production_form_data as any)?.delivered_full_fight_url) && (
+                                                        <button
+                                                            onClick={() => handleWatchDelivered(item.delivered_full_fight_url || (item.production_form_data as any)?.delivered_full_fight_url || '#')}
+                                                            className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mb-2 shadow-md"
+                                                        >
+                                                            <ExternalLink className="w-4 h-4" />
+                                                            Acessar Luta na Íntegra
                                                         </button>
                                                     )}
                                                     {item.delivered_photo_url && (
                                                         <button
                                                             onClick={() => handleWatchDelivered(item.delivered_photo_url || '#')}
-                                                            className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                                                            className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-black font-heading uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mb-2"
                                                         >
                                                             <ExternalLink className="w-4 h-4" />
                                                             Acessar Fotos

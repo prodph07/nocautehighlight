@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Package, Calendar, Scissors, Settings, Menu, X, Ticket } from 'lucide-react';
+import { LayoutDashboard, LogOut, Package, Calendar, Scissors, Settings, Menu, X, Ticket, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useState, useEffect } from 'react';
 
@@ -62,8 +62,6 @@ export function AdminLayout() {
                         </Link>
                     )}
 
-                    {/* Removed videos global link */}
-
                     {isAdmin && (
                         <Link
                             to="/admin/events"
@@ -83,6 +81,17 @@ export function AdminLayout() {
                         >
                             <Package className={`w-5 h-5 ${isActive('/admin/orders') ? 'text-brand-orange' : ''}`} />
                             <span>Pedidos</span>
+                        </Link>
+                    )}
+
+                    {isAdmin && (
+                        <Link
+                            to="/admin/users"
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase tracking-wide text-sm ${isActive('/admin/users') ? 'bg-brand-red/20 text-brand-orange border border-brand-orange/30' : 'text-gray-400 hover:text-white hover:bg-brand-dark'}`}
+                        >
+                            <Users className={`w-5 h-5 ${isActive('/admin/users') ? 'text-brand-orange' : ''}`} />
+                            <span>Usuários</span>
                         </Link>
                     )}
 

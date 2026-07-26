@@ -9,6 +9,7 @@ export function AdminProductionPage() {
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [deliveryUrls, setDeliveryUrls] = useState<{ [key: string]: string }>({});
     const [deliveryPhotoUrls, setDeliveryPhotoUrls] = useState<{ [key: string]: string }>({});
+    const [deliveryFullFightUrls, setDeliveryFullFightUrls] = useState<{ [key: string]: string }>({});
     const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
     const [editingDelivered, setEditingDelivered] = useState<Record<string, boolean>>({});
 
@@ -85,6 +86,7 @@ export function AdminProductionPage() {
             // Pre-populate delivery URLs for items that are already delivered
             const initialUrls: Record<string, string> = {};
             const initialPhotoUrls: Record<string, string> = {};
+            const initialFullFightUrls: Record<string, string> = {};
             sorted.forEach(item => {
                 if (item.delivered_video_url) {
                     initialUrls[item.id] = item.delivered_video_url;
@@ -92,9 +94,13 @@ export function AdminProductionPage() {
                 if (item.delivered_photo_url) {
                     initialPhotoUrls[item.id] = item.delivered_photo_url;
                 }
+                if (item.delivered_full_fight_url || item.production_form_data?.delivered_full_fight_url) {
+                    initialFullFightUrls[item.id] = item.delivered_full_fight_url || item.production_form_data?.delivered_full_fight_url;
+                }
             });
             setDeliveryUrls(initialUrls);
             setDeliveryPhotoUrls(initialPhotoUrls);
+            setDeliveryFullFightUrls(initialFullFightUrls);
         } else {
             console.error("Error fetching productions:", prodRes.error);
         }
@@ -188,9 +194,58 @@ export function AdminProductionPage() {
         }
     };
 
-    const handleUpdateLinks = async (itemId: string, accessLevel: string) => {
+    const handleDeliverFullFight = async (itemId: string, currentFormData: any) => {
+        let fullFightUrl = deliveryFullFightUrls[itemId] || '';
+        if (!fullFightUrl.trim()) {
+            alert('Por favor, insira o link da luta na íntegra.');
+            return;
+        }
+
+        fullFightUrl = fullFightUrl.trim();
+        if (!fullFightUrl.startsWith('http://') && !fullFightUrl.startsWith('https://')) {
+            fullFightUrl = `https://${fullFightUrl}`;
+        }
+
+        setUpdatingId(itemId);
+        try {
+            const updatedFormData = {
+                ...(currentFormData || {}),
+                delivered_full_fight_url: fullFightUrl
+            };
+
+            const updatePayload: any = {
+                delivered_full_fight_url: fullFightUrl,
+                production_form_data: updatedFormData
+            };
+
+            const { error } = await supabase
+                .from('order_items')
+                .update(updatePayload)
+                .eq('id', itemId);
+
+            if (error) {
+                const { error: fallbackError } = await supabase
+                    .from('order_items')
+                    .update({ production_form_data: updatedFormData })
+                    .eq('id', itemId);
+
+                if (fallbackError) throw fallbackError;
+            }
+
+            alert('Luta na íntegra liberada para o cliente com sucesso!');
+            await loadProductions();
+        } catch (error: any) {
+            console.error('Error delivering full fight:', error);
+            alert('Erro ao entregar a luta na íntegra: ' + error.message);
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const handleUpdateLinks = async (itemId: string, accessLevel: string, currentFormData?: any) => {
         let url = deliveryUrls[itemId] || '';
         let photoUrl = deliveryPhotoUrls[itemId] || '';
+        let fullFightUrl = deliveryFullFightUrls[itemId] || '';
 
         const needsVideo = accessLevel !== 'photo_only';
         const needsPhoto = accessLevel.includes('photo');
@@ -213,18 +268,41 @@ export function AdminProductionPage() {
             photoUrl = '';
         }
 
+        if (fullFightUrl) {
+            fullFightUrl = fullFightUrl.trim();
+            if (fullFightUrl && !fullFightUrl.startsWith('http://') && !fullFightUrl.startsWith('https://')) {
+                fullFightUrl = `https://${fullFightUrl}`;
+            }
+        }
+
         setUpdatingId(itemId);
         try {
-            const updatePayload: any = {};
+            const updatedFormData = {
+                ...(currentFormData || {}),
+                delivered_full_fight_url: fullFightUrl
+            };
+
+            const updatePayload: any = {
+                production_form_data: updatedFormData
+            };
             if (needsVideo) updatePayload.delivered_video_url = url;
             if (needsPhoto) updatePayload.delivered_photo_url = photoUrl;
+            if (fullFightUrl) updatePayload.delivered_full_fight_url = fullFightUrl;
 
             const { error } = await supabase
                 .from('order_items')
                 .update(updatePayload)
                 .eq('id', itemId);
 
-            if (error) throw error;
+            if (error) {
+                delete updatePayload.delivered_full_fight_url;
+                const { error: fallbackError } = await supabase
+                    .from('order_items')
+                    .update(updatePayload)
+                    .eq('id', itemId);
+
+                if (fallbackError) throw fallbackError;
+            }
 
             alert('Links atualizados com sucesso!');
             await loadProductions();
@@ -242,6 +320,10 @@ export function AdminProductionPage() {
 
     const handlePhotoUrlChange = (itemId: string, value: string) => {
         setDeliveryPhotoUrls(prev => ({ ...prev, [itemId]: value }));
+    };
+
+    const handleFullFightUrlChange = (itemId: string, value: string) => {
+        setDeliveryFullFightUrls(prev => ({ ...prev, [itemId]: value }));
     };
 
     // Editor Assignment Logic
@@ -719,7 +801,7 @@ export function AdminProductionPage() {
                                                                     {item.access_level !== 'photo_only' && (
                                                                         <div className="mb-4">
                                                                             <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-3">
-                                                                                Link do Vídeo Finalizado <span className="text-xs text-gray-500 normal-case font-normal italic">(Google Drive, Vimeo, YouTube)</span>
+                                                                                Link do Vídeo Finalizado / Highlight <span className="text-xs text-gray-500 normal-case font-normal italic">(Google Drive, Vimeo, YouTube)</span>
                                                                             </label>
                                                                             <input
                                                                                 type="url"
@@ -727,6 +809,21 @@ export function AdminProductionPage() {
                                                                                 value={deliveryUrls[item.id] || ''}
                                                                                 onChange={(e) => handleUrlChange(item.id, e.target.value)}
                                                                                 className="w-full px-4 py-3 bg-black border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all placeholder:text-gray-600"
+                                                                            />
+                                                                        </div>
+                                                                    )}
+
+                                                                    {item.access_level?.includes('full_access') && (
+                                                                        <div className="mb-4">
+                                                                            <label className="block text-sm font-bold uppercase tracking-wider text-purple-400 mb-3">
+                                                                                Link da Luta na Íntegra <span className="text-xs text-gray-500 normal-case font-normal italic">(Vídeo Completo / YouTube / Drive)</span>
+                                                                            </label>
+                                                                            <input
+                                                                                type="url"
+                                                                                placeholder="https://..."
+                                                                                value={deliveryFullFightUrls[item.id] || ''}
+                                                                                onChange={(e) => handleFullFightUrlChange(item.id, e.target.value)}
+                                                                                className="w-full px-4 py-3 bg-black border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all placeholder:text-gray-600"
                                                                             />
                                                                         </div>
                                                                     )}
@@ -746,7 +843,7 @@ export function AdminProductionPage() {
                                                                         </div>
                                                                     )}
 
-                                                                    <div className="flex flex-col sm:flex-row justify-end gap-3">
+                                                                    <div className="flex flex-col sm:flex-row justify-end gap-3 flex-wrap">
                                                                         {item.access_level !== 'photo_only' && (
                                                                             <button
                                                                                 onClick={() => handleDeliverVideo(item.id, item.access_level)}
@@ -758,9 +855,25 @@ export function AdminProductionPage() {
                                                                                 ) : (
                                                                                     <Send className="w-5 h-5" />
                                                                                 )}
-                                                                                Entregar Vídeo
+                                                                                Entregar Highlight
                                                                             </button>
                                                                         )}
+
+                                                                        {item.access_level?.includes('full_access') && (
+                                                                            <button
+                                                                                onClick={() => handleDeliverFullFight(item.id, item.production_form_data)}
+                                                                                disabled={updatingId === item.id}
+                                                                                className="w-full sm:w-auto justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all flex items-center gap-3 disabled:opacity-50"
+                                                                            >
+                                                                                {updatingId === item.id ? (
+                                                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                                                ) : (
+                                                                                    <Send className="w-5 h-5" />
+                                                                                )}
+                                                                                Entregar Íntegra
+                                                                            </button>
+                                                                        )}
+
                                                                         {item.access_level?.includes('photo') && (
                                                                             <button
                                                                                 onClick={() => handleDeliverPhotos(item.id, item.access_level)}
@@ -819,10 +932,22 @@ export function AdminProductionPage() {
                                                                                 target="_blank"
                                                                                 rel="noopener noreferrer"
                                                                                 className="px-4 py-2 bg-green-900/40 text-green-400 hover:bg-green-900/60 rounded-lg transition-colors font-bold uppercase tracking-wider text-xs flex items-center border border-green-500/30"
-                                                                                title="Ver Arquivo Final"
+                                                                                title="Ver Highlight Final"
                                                                             >
                                                                                 <ExternalLink className="w-4 h-4 mr-2" />
-                                                                                Vídeo Final
+                                                                                Highlight
+                                                                            </a>
+                                                                        )}
+                                                                        {(item.delivered_full_fight_url || (formData as any)?.delivered_full_fight_url) && (
+                                                                            <a
+                                                                                href={item.delivered_full_fight_url || (formData as any)?.delivered_full_fight_url}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="px-4 py-2 bg-purple-900/40 text-purple-400 hover:bg-purple-900/60 rounded-lg transition-colors font-bold uppercase tracking-wider text-xs flex items-center border border-purple-500/30"
+                                                                                title="Ver Luta na Íntegra"
+                                                                            >
+                                                                                <ExternalLink className="w-4 h-4 mr-2" />
+                                                                                Luta na Íntegra
                                                                             </a>
                                                                         )}
                                                                         {item.delivered_photo_url && (
@@ -877,7 +1002,7 @@ export function AdminProductionPage() {
                                                                             {item.access_level !== 'photo_only' && (
                                                                                 <div className="mb-4">
                                                                                     <label className="block text-sm font-bold uppercase tracking-wider text-gray-400 mb-3">
-                                                                                        Atualizar Link do Vídeo Finalizado
+                                                                                        Atualizar Link do Highlight / Vídeo Finalizado
                                                                                     </label>
                                                                                     <input
                                                                                         type="url"
@@ -885,6 +1010,21 @@ export function AdminProductionPage() {
                                                                                         value={deliveryUrls[item.id] || ''}
                                                                                         onChange={(e) => handleUrlChange(item.id, e.target.value)}
                                                                                         className="w-full px-4 py-3 bg-black border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-gray-600"
+                                                                                    />
+                                                                                </div>
+                                                                            )}
+
+                                                                            {item.access_level?.includes('full_access') && (
+                                                                                <div className="mb-4">
+                                                                                    <label className="block text-sm font-bold uppercase tracking-wider text-purple-400 mb-3">
+                                                                                        Atualizar Link da Luta na Íntegra
+                                                                                    </label>
+                                                                                    <input
+                                                                                        type="url"
+                                                                                        placeholder="https://..."
+                                                                                        value={deliveryFullFightUrls[item.id] || ''}
+                                                                                        onChange={(e) => handleFullFightUrlChange(item.id, e.target.value)}
+                                                                                        className="w-full px-4 py-3 bg-black border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all placeholder:text-gray-600"
                                                                                     />
                                                                                 </div>
                                                                             )}
@@ -906,7 +1046,7 @@ export function AdminProductionPage() {
                                                                             
                                                                             <div className="flex justify-end">
                                                                                 <button
-                                                                                    onClick={() => handleUpdateLinks(item.id, item.access_level)}
+                                                                                    onClick={() => handleUpdateLinks(item.id, item.access_level, formData)}
                                                                                     disabled={updatingId === item.id}
                                                                                     className="w-full md:w-auto justify-center px-8 py-3 bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-lg font-black font-heading uppercase tracking-widest hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all flex items-center gap-3 disabled:opacity-50"
                                                                                 >

@@ -4,12 +4,13 @@ import { Navbar } from '../components/layout/Navbar';
 import { EventService } from '../services/event.service';
 import { type Event } from '../types';
 import { EventCard } from '../components/EventCard';
-import { Loader2, Search, Zap } from 'lucide-react';
+import { Loader2, Search, Zap, LayoutGrid, List } from 'lucide-react';
 
 export function HomePage() {
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
     useEffect(() => {
         loadEvents();
@@ -66,11 +67,41 @@ export function HomePage() {
 
             {/* Events List */}
             <main className="flex-grow container mx-auto px-4 py-16 max-w-7xl">
-                <div className="flex flex-col sm:flex-row items-center sm:justify-start mb-10 text-center sm:text-left">
-                    <div className="p-3 bg-brand-red/10 border border-brand-red/30 rounded-xl mb-4 sm:mb-0 sm:mr-4 shadow-[0_0_15px_rgba(220,38,38,0.2)]">
-                        <Zap className="w-6 h-6 text-brand-orange" />
+                <div className="flex flex-col sm:flex-row items-center justify-between mb-10 gap-4">
+                    <div className="flex items-center text-center sm:text-left">
+                        <div className="p-3 bg-brand-red/10 border border-brand-red/30 rounded-xl mr-4 shadow-[0_0_15px_rgba(220,38,38,0.2)]">
+                            <Zap className="w-6 h-6 text-brand-orange" />
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-black font-heading uppercase tracking-wide text-white">Eventos Disponíveis</h2>
                     </div>
-                    <h2 className="text-2xl sm:text-3xl font-black font-heading uppercase tracking-wide text-white">Eventos Disponíveis</h2>
+
+                    {/* View Mode Switcher */}
+                    <div className="flex items-center bg-black p-1 rounded-xl border border-brand-red/20 shrink-0">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                                viewMode === 'grid'
+                                    ? 'bg-brand-orange text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]'
+                                    : 'text-gray-400 hover:text-white'
+                            }`}
+                            title="Visualização em Grade"
+                        >
+                            <LayoutGrid className="w-4 h-4" />
+                            <span className="hidden sm:inline">Grade</span>
+                        </button>
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                                viewMode === 'list'
+                                    ? 'bg-brand-orange text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]'
+                                    : 'text-gray-400 hover:text-white'
+                            }`}
+                            title="Visualização em Lista"
+                        >
+                            <List className="w-4 h-4" />
+                            <span className="hidden sm:inline">Lista</span>
+                        </button>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -91,9 +122,9 @@ export function HomePage() {
                         )}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8' : 'space-y-4'}>
                         {filteredEvents.map((event) => (
-                            <EventCard key={event.id} event={event} />
+                            <EventCard key={event.id} event={event} layout={viewMode} />
                         ))}
                     </div>
                 )}
@@ -109,3 +140,4 @@ export function HomePage() {
         </div>
     );
 }
+

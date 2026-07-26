@@ -20,6 +20,7 @@ const AdminProductionPage = lazy(() => import('./pages/admin/AdminProductionPage
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage').then(module => ({ default: module.AdminSettingsPage })));
 const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage').then(module => ({ default: module.AdminOrdersPage })));
 const AdminCouponsPage = lazy(() => import('./pages/admin/AdminCouponsPage').then(module => ({ default: module.AdminCouponsPage })));
+const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage').then(module => ({ default: module.AdminUsersPage })));
 
 const LoginPage = lazy(() => import('./pages/auth/LoginPage').then(module => ({ default: module.LoginPage })));
 const SignupPage = lazy(() => import('./pages/auth/SignupPage').then(module => ({ default: module.SignupPage })));
@@ -55,6 +56,7 @@ function App() {
               <Route index element={<AdminDashboardPage />} />
               <Route path="events" element={<AdminEventsPage />} />
               <Route path="events/:eventId/videos" element={<AdminEventVideosPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
               <Route path="production" element={<AdminProductionPage />} />
               <Route path="orders" element={<AdminOrdersPage />} />
               <Route path="coupons" element={<AdminCouponsPage />} />

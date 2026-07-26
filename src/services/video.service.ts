@@ -123,6 +123,7 @@ export const VideoService = {
                             production_form_data,
                             delivered_video_url,
                             delivered_photo_url,
+                            delivered_full_fight_url,
                             videos ( title )
                         )
                     `)
