@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
-import { DollarSign, Video, Users, TrendingUp, Calendar, ShoppingCart, Loader2 } from 'lucide-react';
+import { DollarSign, Video, Users, TrendingUp, Calendar, ShoppingCart, Loader2, Wallet } from 'lucide-react';
 import { useOutletContext, Navigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays, startOfMonth, startOfToday, isAfter, parseISO } from 'date-fns';
@@ -22,9 +22,34 @@ export function AdminDashboardPage() {
     const [allOrderItems, setAllOrderItems] = useState<any[]>([]);
     const [totalUsersCount, setTotalUsersCount] = useState(0);
 
+    // Pagarme balance
+    const [pagarmeBalance, setPagarmeBalance] = useState<{available: number, waiting_funds: number} | null>(null);
+
     useEffect(() => {
         loadRawData();
+        loadBalance();
     }, []);
+
+    async function loadBalance() {
+        try {
+            const { data, error } = await supabase.functions.invoke('pagarme-balance');
+            if (error) throw error;
+            console.log('DEBUG BALANCE RAW DATA:', data);
+
+            if (data && data.success && data.data) {
+                // A API da Pagar.me v5 retorna available_amount e waiting_funds_amount
+                const available = data.data.available_amount ?? data.data.available?.amount ?? 0;
+                const waiting_funds = data.data.waiting_funds_amount ?? data.data.waiting_funds?.amount ?? 0;
+                
+                setPagarmeBalance({ 
+                    available: available / 100, 
+                    waiting_funds: waiting_funds / 100 
+                });
+            }
+        } catch (err) {
+            console.error('Failed to load pagarme balance:', err);
+        }
+    }
 
     async function loadRawData() {
         setLoading(true);
@@ -249,7 +274,13 @@ export function AdminDashboardPage() {
             </div>
 
             {/* Top Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                <StatCard
+                    title="Disponível (Saque)"
+                    value={pagarmeBalance ? formatCurrency(pagarmeBalance.available) : '...'}
+                    icon={Wallet}
+                    colorClass="from-emerald-500/10"
+                />
                 <StatCard
                     title="Faturamento"
                     value={formatCurrency(stats.totalRevenue)}
