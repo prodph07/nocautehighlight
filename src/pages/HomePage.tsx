@@ -37,13 +37,13 @@ export function HomePage() {
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-30 mix-blend-overlay"></div>
                 <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/50 via-brand-dark/80 to-brand-dark"></div>
 
-                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 text-center">
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 text-center">
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-black font-heading italic tracking-tighter text-white mb-6 uppercase">
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-red to-brand-orange drop-shadow-lg">
-                            HIGH NOCAUTE
+                            Adquira o highlight
                         </span>
                         <br />
-                        <span className="text-gray-100 drop-shadow-md">ON DEMAND</span>
+                        <span className="text-gray-100 drop-shadow-md">da sua luta aqui mesmo</span>
                     </h1>
                     <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-light px-2">
                         Adquira os melhores highlights de eventos de luta do Brasil. Muay Thai, Kickboxing e Boxe em alta qualidade.
@@ -66,7 +66,7 @@ export function HomePage() {
             </div>
 
             {/* Events List */}
-            <main className="flex-grow container mx-auto px-4 py-16 max-w-7xl">
+            <main className="flex-grow container mx-auto px-4 pt-8 pb-16 max-w-7xl">
                 <div className="flex flex-col sm:flex-row items-center justify-between mb-10 gap-4">
                     <div className="flex items-center text-center sm:text-left">
                         <div className="p-3 bg-brand-red/10 border border-brand-red/30 rounded-xl mr-4 shadow-[0_0_15px_rgba(220,38,38,0.2)]">

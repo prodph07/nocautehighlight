@@ -161,7 +161,7 @@ export function VideoDetailsPage() {
                             <div className="mt-8 flex items-start gap-4 p-4 bg-brand-red/10 rounded-xl border border-brand-red/20">
                                 <Play className="w-6 h-6 text-brand-orange flex-shrink-0 mt-0.5" />
                                 <p className="text-sm text-gray-300 leading-relaxed">
-                                    Ao comprar, você recebe acesso <strong className="text-white font-bold">imediato</strong> ao arquivo digital em alta definição.
+                                    Ao comprar, a mídia será encaminhada para a produção, sendo liberada em até 7 dias úteis.
                                 </p>
                             </div>
 

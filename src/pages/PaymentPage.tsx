@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ShieldCheck, QrCode, Loader2, Lock, Clock, Ticket, CheckCircle2, XCircle } from 'lucide-react';
+import { ShieldCheck, QrCode, Loader2, Lock, Clock, Ticket, CheckCircle2, XCircle, Video, X } from 'lucide-react';
 import { Navbar } from '../components/layout/Navbar';
 import { type PaymentMethod } from '../types';
 import { VideoService } from '../services/video.service';
@@ -26,6 +26,7 @@ export function PaymentPage() {
     // Upsell state
     const [upsellPrice, setUpsellPrice] = useState<number>(20); // Default, updated on load
     const [wantsFullFight, setWantsFullFight] = useState(false);
+    const [showUpsellModal, setShowUpsellModal] = useState(false);
 
     // Photo Purchase Options
     const [purchaseOption, setPurchaseOption] = useState<'highlight_only' | 'photo_only' | 'photo_and_highlight'>('highlight_only');
@@ -122,7 +123,8 @@ export function PaymentPage() {
         setCouponError('');
     };
 
-    const handleCheckout = async () => {
+    const handleCheckoutAction = async (overrideWantsFullFight?: boolean) => {
+        const finalWantsFullFight = overrideWantsFullFight !== undefined ? overrideWantsFullFight : wantsFullFight;
         if (!event) return;
         if (!user) return;
 
@@ -130,7 +132,7 @@ export function PaymentPage() {
         setQrCode(null);
         setQrCodeUrl(null);
 
-        let finalCpf = user.user_metadata?.cpf ? user.user_metadata.cpf.replace(/\\D+/g, '') : '';
+        let finalCpf = user.user_metadata?.cpf ? user.user_metadata.cpf.replace(/\D+/g, '') : '';
 
         if (!isValidCPF(finalCpf)) {
             const inputCpf = window.prompt("Seu cadastro de teste está sem CPF válido. Por favor, digite um CPF válido (somente números) para prosseguir:");
@@ -169,7 +171,7 @@ export function PaymentPage() {
             // Replace logical OR with ternary
             const customerName = user.user_metadata?.full_name ? user.user_metadata.full_name : 'Cliente';
 
-            const rawPhone = user.user_metadata?.whatsapp ? user.user_metadata.whatsapp.replace(/\\D/g, '') : '';
+            const rawPhone = user.user_metadata?.whatsapp ? user.user_metadata.whatsapp.replace(/\D/g, '') : '';
             let countryCode = '55';
             let areaCode = '11';
             let phoneNum = '999999999';
@@ -187,11 +189,11 @@ export function PaymentPage() {
 
             let baseAmountForTx = 0;
             if (purchaseOption === 'highlight_only') {
-                baseAmountForTx = event.price_highlight + (wantsFullFight ? upsellPrice : 0);
+                baseAmountForTx = event.price_highlight + (finalWantsFullFight ? upsellPrice : 0);
             } else if (purchaseOption === 'photo_only') {
                 baseAmountForTx = photoOnlyPrice;
             } else if (purchaseOption === 'photo_and_highlight') {
-                baseAmountForTx = photoPromoPrice + (wantsFullFight ? upsellPrice : 0);
+                baseAmountForTx = photoPromoPrice + (finalWantsFullFight ? upsellPrice : 0);
             }
 
             const discountAmountForTx = appliedCoupon ? (baseAmountForTx * appliedCoupon.discount_percentage) / 100 : 0;
@@ -199,11 +201,11 @@ export function PaymentPage() {
 
             let selectedAccessLevel = 'highlight_only';
             if (purchaseOption === 'highlight_only') {
-                selectedAccessLevel = wantsFullFight ? 'full_access' : 'highlight_only';
+                selectedAccessLevel = finalWantsFullFight ? 'full_access' : 'highlight_only';
             } else if (purchaseOption === 'photo_only') {
                 selectedAccessLevel = 'photo_only';
             } else if (purchaseOption === 'photo_and_highlight') {
-                selectedAccessLevel = wantsFullFight ? 'photo_and_full_access' : 'photo_and_highlight';
+                selectedAccessLevel = finalWantsFullFight ? 'photo_and_full_access' : 'photo_and_highlight';
             }
 
             if (finalAmount === 0 && appliedCoupon && appliedCoupon.discount_percentage === 100) {
@@ -243,9 +245,9 @@ export function PaymentPage() {
             }
 
             let descriptionOptions = '';
-            if (purchaseOption === 'highlight_only') descriptionOptions = wantsFullFight ? ' + Luta na Íntegra' : '';
+            if (purchaseOption === 'highlight_only') descriptionOptions = finalWantsFullFight ? ' + Luta na Íntegra' : '';
             if (purchaseOption === 'photo_only') descriptionOptions = ' (Apenas Fotos)';
-            if (purchaseOption === 'photo_and_highlight') descriptionOptions = wantsFullFight ? ' + Luta na Íntegra + Fotos' : ' + Fotos';
+            if (purchaseOption === 'photo_and_highlight') descriptionOptions = finalWantsFullFight ? ' + Luta na Íntegra + Fotos' : ' + Fotos';
 
             const transaction = await PagarmeService.createTransaction({
                 amount: Math.round(finalAmount * 100),
@@ -425,6 +427,18 @@ export function PaymentPage() {
                                 <h3 className="font-bold text-white line-clamp-2 uppercase font-heading tracking-wide mb-1">{evt.title}</h3>
                                 <p className="text-sm text-brand-orange font-bold uppercase tracking-wider">{evt.event_name}</p>
                             </div>
+                        </div>
+
+                        <div className="bg-brand-orange/10 border border-brand-orange/30 rounded-xl p-4 mb-6 text-sm text-gray-300 shadow-[0_0_15px_rgba(234,88,12,0.15)]">
+                            <p className="mb-2">
+                                <strong className="text-brand-orange uppercase font-black tracking-wider text-base">O que você está comprando?</strong><br/>
+                                O vídeo de <strong className="text-white">HIGHLIGHT</strong> é um material editado exclusivamente com os <strong className="text-white">melhores momentos</strong> da sua luta.
+                            </p>
+                            {hasPhotos && (
+                                <p>
+                                    Ao marcar a opção com <strong className="text-white">FOTOS</strong>, você está garantindo o <strong className="text-white">álbum de fotos completo</strong> da sua participação no evento.
+                                </p>
+                            )}
                         </div>
 
                         {/* Package Selection */}
@@ -622,7 +636,13 @@ export function PaymentPage() {
                         </div>
 
                         <button
-                            onClick={handleCheckout}
+                            onClick={() => {
+                                if (!wantsFullFight && purchaseOption !== 'photo_only') {
+                                    setShowUpsellModal(true);
+                                } else {
+                                    handleCheckoutAction();
+                                }
+                            }}
                             disabled={processing}
                             className="w-full py-4 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase italic tracking-widest text-xl hover:shadow-[0_0_30px_rgba(220,38,38,0.5)] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center transition-all transform hover:-translate-y-1"
                         >
@@ -643,6 +663,51 @@ export function PaymentPage() {
                     </div>
                 </div>
             </main>
+
+            {showUpsellModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-brand-dark border border-brand-red/30 p-8 rounded-2xl max-w-lg w-full text-center shadow-2xl relative">
+                        <button
+                            onClick={() => setShowUpsellModal(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                            title="Fechar"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                        <div className="w-16 h-16 bg-brand-orange/20 rounded-full flex items-center justify-center mx-auto mb-6 mt-2">
+                            <Video className="w-8 h-8 text-brand-orange" />
+                        </div>
+                        <h2 className="text-2xl font-black font-heading uppercase italic tracking-wider text-white mb-4">
+                            Não quer a luta na íntegra?
+                        </h2>
+                        <p className="text-gray-300 mb-8 font-medium">
+                            A Luta na Íntegra são os arquivos diretos da câmera com todos os rounds gravados, para você rever sua luta e criar conteúdo como quiser. 
+                            Tem certeza que deseja continuar sem ela?
+                        </p>
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => {
+                                    setWantsFullFight(true);
+                                    setShowUpsellModal(false);
+                                    handleCheckoutAction(true);
+                                }}
+                                className="w-full py-3.5 bg-gradient-to-r from-brand-red to-brand-orange text-white rounded-xl font-black font-heading uppercase italic tracking-wider hover:shadow-lg hover:shadow-brand-red/30 transition-all"
+                            >
+                                Adicionar Luta (+ {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(upsellPrice)})
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowUpsellModal(false);
+                                    handleCheckoutAction(false);
+                                }}
+                                className="w-full py-3 bg-transparent border border-gray-600 text-gray-400 hover:text-white hover:border-gray-400 rounded-xl font-bold uppercase transition-colors"
+                            >
+                                Continuar sem a Luta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

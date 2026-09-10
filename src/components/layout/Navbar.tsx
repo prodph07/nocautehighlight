@@ -75,7 +75,7 @@ export function Navbar() {
                         <div className="p-2 bg-gradient-to-br from-brand-red to-brand-orange rounded-lg shadow-lg shadow-brand-red/20">
                             <Video className="w-6 h-6 text-white" />
                         </div>
-                        <span className="text-2xl font-black font-heading tracking-wider uppercase italic text-white">FightVideos</span>
+                        <span className="text-2xl font-black font-heading tracking-wider uppercase italic text-white">Nocaute Mídia</span>
                     </Link>
 
                     <div className="flex items-center space-x-4">

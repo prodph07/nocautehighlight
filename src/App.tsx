@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 
 const HomePage = lazy(() => import('./pages/HomePage').then(module => ({ default: module.HomePage })));
 const VideoDetailsPage = lazy(() => import('./pages/VideoDetailsPage').then(module => ({ default: module.VideoDetailsPage })));
@@ -66,6 +67,7 @@ function App() {
             </Route>
           </Routes>
         </Suspense>
+        <FloatingWhatsApp />
       </Router>
     </ErrorBoundary>
   );
