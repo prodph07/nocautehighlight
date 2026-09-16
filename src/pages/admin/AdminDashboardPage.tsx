@@ -16,10 +16,9 @@ export function AdminDashboardPage() {
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     
-    // Raw Data state
     const [allVideos, setAllVideos] = useState<any[]>([]);
+    const [allEvents, setAllEvents] = useState<any[]>([]);
     const [allPaidOrders, setAllPaidOrders] = useState<any[]>([]);
-    const [allOrderItems, setAllOrderItems] = useState<any[]>([]);
     const [totalUsersCount, setTotalUsersCount] = useState(0);
 
     // Pagarme balance
@@ -54,33 +53,31 @@ export function AdminDashboardPage() {
     async function loadRawData() {
         setLoading(true);
         try {
-            // 1. Fetch all active videos
+            // 1. Fetch all videos (active and inactive, so past sales are still mapped correctly)
             const { data: videos } = await supabase
                 .from('videos')
-                .select('id, title, event_name, is_active')
-                .eq('is_active', true);
+                .select('id, title, event_name, is_active, event_id');
 
-            // 2. Fetch all paid orders
+            // 1.b Fetch all events
+            const { data: events } = await supabase
+                .from('events')
+                .select('id, title');
+
+            // 2. Fetch all paid orders with their items and video data embedded
             const { data: orders } = await supabase
                 .from('orders')
-                .select('id, created_at, status, total_amount, profiles(full_name, email, whatsapp)')
+                .select('id, created_at, status, total_amount, profiles(full_name, email, whatsapp), order_items(videos(id, title, event_name, event_id))')
                 .eq('status', 'paid')
                 .order('created_at', { ascending: true }); // ascending for charts
 
-            // 3. Fetch all order items linked to paid orders (to cross reference sales easily)
-            const { data: items } = await supabase
-                .from('order_items')
-                .select('id, order_id, video_id, access_level, production_form_data, orders!inner(status, profiles(full_name, whatsapp))')
-                .eq('orders.status', 'paid');
-
-            // 4. Fetch total users
+            // 3. Fetch total users
             const { count: usersCount } = await supabase
                 .from('profiles')
                 .select('*', { count: 'exact', head: true });
 
             setAllVideos(videos || []);
+            setAllEvents(events || []);
             setAllPaidOrders(orders || []);
-            setAllOrderItems(items || []);
             setTotalUsersCount(usersCount || 0);
 
         } catch (error) {
@@ -124,48 +121,123 @@ export function AdminDashboardPage() {
         return {
             totalRevenue,
             totalOrders: filteredOrders.length,
-            activeVideos: allVideos.length,
+            activeVideos: allVideos.filter(v => v.is_active).length,
             totalUsers: totalUsersCount
         };
     }, [filteredOrders, allVideos, totalUsersCount]);
 
     // Calculate Chart Data (Revenue by Date)
     const chartData = useMemo(() => {
-        const grouped: Record<string, number> = {};
+        const grouped: Record<string, { faturamento: number, details: Record<string, { faturamento: number, vendas: number, cupons100: number }> }> = {};
         
         filteredOrders.forEach(order => {
             // format to 'DD/MM'
             const dateStr = format(parseISO(order.created_at), 'dd/MM', { locale: ptBR });
-            if (!grouped[dateStr]) grouped[dateStr] = 0;
-            grouped[dateStr] += (order.total_amount || 0);
+            if (!grouped[dateStr]) {
+                grouped[dateStr] = { faturamento: 0, details: {} };
+            }
+            
+            const totalAmount = order.total_amount || 0;
+            grouped[dateStr].faturamento += totalAmount;
+            
+            // Find event name (same logic as eventRevenueData)
+            let eventName = 'Outros / Desconhecido';
+            const firstItem = order.order_items?.[0];
+            const video = firstItem?.videos;
+            
+            if (video) {
+                let foundName = video.event_name;
+                if (!foundName && video.event_id && allEvents.length > 0) {
+                    const evt = allEvents.find(e => e.id === video.event_id);
+                    if (evt) foundName = evt.title;
+                }
+                if (!foundName) foundName = video.title;
+                if (foundName) eventName = foundName;
+            }
+
+            if (!grouped[dateStr].details[eventName]) {
+                grouped[dateStr].details[eventName] = { faturamento: 0, vendas: 0, cupons100: 0 };
+            }
+
+            grouped[dateStr].details[eventName].faturamento += totalAmount;
+            
+            if (totalAmount === 0) {
+                grouped[dateStr].details[eventName].cupons100 += 1;
+            } else {
+                grouped[dateStr].details[eventName].vendas += 1;
+            }
         });
 
         // Convert to array
         return Object.keys(grouped).map(date => ({
             date,
-            Faturamento: grouped[date]
+            Faturamento: grouped[date].faturamento,
+            details: grouped[date].details
         }));
-    }, [filteredOrders]);
+    }, [filteredOrders, allEvents]);
+
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+            const data = payload[0].payload;
+            return (
+                <div className="bg-[#111] border border-[#333] p-4 rounded-xl shadow-2xl max-w-xs">
+                    <p className="text-white font-black uppercase tracking-widest mb-3 border-b border-[#333] pb-2">{label}</p>
+                    <p className="text-brand-orange font-black text-xl mb-3">
+                        Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.Faturamento)}
+                    </p>
+                    <div className="space-y-3">
+                        {Object.entries(data.details).map(([eventName, stats]: [string, any]) => (
+                            <div key={eventName} className="bg-black/50 p-2 rounded-lg border border-gray-800">
+                                <p className="text-gray-200 text-xs font-bold uppercase mb-1 leading-tight">{eventName}</p>
+                                <div className="pl-2 border-l-2 border-brand-red/50 space-y-1">
+                                    {stats.vendas > 0 && (
+                                        <p className="text-gray-400 text-xs font-medium">
+                                            Vendas: <span className="text-white">{stats.vendas}</span> 
+                                            <span className="text-brand-orange ml-1">({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.faturamento)})</span>
+                                        </p>
+                                    )}
+                                    {stats.cupons100 > 0 && (
+                                        <p className="text-brand-orange text-xs font-bold bg-brand-orange/10 inline-block px-1.5 py-0.5 rounded">
+                                            Cupons 100%: {stats.cupons100}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    };
 
     // Calculate Revenue per Event (based on filtered orders)
     const eventRevenueData = useMemo(() => {
         const grouped: Record<string, { faturamento: number, vendas: number }> = {};
         
-        // Find which orders belong to which event via order_items
-        const orderIdToEventMap: Record<string, string> = {};
-        allOrderItems.forEach(item => {
-            const video = allVideos.find(v => v.id === item.video_id);
-            if (video && video.event_name) {
-                // If an order has multiple items, we might double count or pick the first.
-                // Assuming 1 video per order in current business logic:
-                if (!orderIdToEventMap[item.order_id]) {
-                    orderIdToEventMap[item.order_id] = video.event_name;
+        filteredOrders.forEach(order => {
+            let eventName = 'Outros / Desconhecido';
+            
+            const firstItem = order.order_items?.[0];
+            const video = firstItem?.videos;
+            
+            if (video) {
+                let foundName = video.event_name;
+                
+                if (!foundName && video.event_id && allEvents.length > 0) {
+                    const evt = allEvents.find(e => e.id === video.event_id);
+                    if (evt) foundName = evt.title;
+                }
+                
+                if (!foundName) {
+                     foundName = video.title;
+                }
+                
+                if (foundName) {
+                    eventName = foundName;
                 }
             }
-        });
 
-        filteredOrders.forEach(order => {
-            const eventName = orderIdToEventMap[order.id] || 'Outros / Desconhecido';
             if (!grouped[eventName]) grouped[eventName] = { faturamento: 0, vendas: 0 };
             grouped[eventName].faturamento += (order.total_amount || 0);
             grouped[eventName].vendas += 1;
@@ -177,7 +249,7 @@ export function AdminDashboardPage() {
             Vendas: grouped[event_name].vendas
         })).sort((a, b) => b.Faturamento - a.Faturamento);
 
-    }, [filteredOrders, allOrderItems, allVideos]);
+    }, [filteredOrders, allEvents]);
 
     // Formatters
     const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -325,11 +397,7 @@ export function AdminDashboardPage() {
                                     <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
                                     <XAxis dataKey="date" stroke="#666" tick={{ fill: '#888', fontSize: 12 }} />
                                     <YAxis tickFormatter={(value) => `R$ ${value}`} stroke="#666" tick={{ fill: '#888', fontSize: 12 }} />
-                                    <RechartsTooltip 
-                                        formatter={(value: any) => [formatCurrency(Number(value) || 0), 'Faturamento']}
-                                        contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: '8px' }}
-                                        itemStyle={{ color: '#f97316', fontWeight: 'bold' }}
-                                    />
+                                    <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: '#333', strokeWidth: 1 }} />
                                     <Line type="monotone" dataKey="Faturamento" stroke="#f97316" strokeWidth={3} dot={{ r: 4, fill: '#f97316' }} activeDot={{ r: 6, fill: '#f97316', stroke: '#fff', strokeWidth: 2 }} />
                                 </LineChart>
                             </ResponsiveContainer>
