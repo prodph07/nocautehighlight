@@ -14,6 +14,7 @@ export function AdminProductionPage() {
     const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
     const [editingDelivered, setEditingDelivered] = useState<Record<string, boolean>>({});
     const [eventSortBy, setEventSortBy] = useState<'newest' | 'oldest' | 'title_asc' | 'sales_desc' | 'sales_asc'>('newest');
+    const [activeTab, setActiveTab] = useState<Record<string, 'pending' | 'delivered'>>({});
 
     // Manual Addition States
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -707,12 +708,41 @@ export function AdminProductionPage() {
                                 </div>
 
                                 {/* Accordion Body */}
-                                {isExpanded && (
-                                    <div className="border-t border-brand-red/20 bg-brand-dark/30 p-6 space-y-8">
-                                        {group.pending.length > 0 && (
-                                            <div>
-                                                <h3 className="text-lg font-black font-heading uppercase tracking-widest text-white border-l-4 border-brand-orange pl-3 mb-6">Aguardando <span className="text-brand-orange">Entrega</span></h3>
-                                                <div className="space-y-6">
+                                {isExpanded && (() => {
+                                    const currentTab = activeTab[group.eventId] || 'pending';
+
+                                    return (
+                                        <div className="border-t border-brand-red/20 bg-brand-dark/30 p-6">
+                                            {/* TABS */}
+                                            <div className="flex flex-wrap gap-2 mb-6">
+                                                <button
+                                                    onClick={() => setActiveTab(prev => ({ ...prev, [group.eventId]: 'pending' }))}
+                                                    className={`px-4 py-2 rounded-lg font-bold uppercase tracking-wider text-xs transition-colors border ${
+                                                        currentTab === 'pending'
+                                                            ? 'bg-brand-orange text-white border-brand-orange'
+                                                            : 'bg-black text-gray-400 hover:text-white border-gray-700'
+                                                    }`}
+                                                >
+                                                    Demandas Abertas ({group.pending.length})
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveTab(prev => ({ ...prev, [group.eventId]: 'delivered' }))}
+                                                    className={`px-4 py-2 rounded-lg font-bold uppercase tracking-wider text-xs transition-colors border ${
+                                                        currentTab === 'delivered'
+                                                            ? 'bg-green-600 text-white border-green-600'
+                                                            : 'bg-black text-gray-400 hover:text-white border-gray-700'
+                                                    }`}
+                                                >
+                                                    Demandas Entregues ({group.delivered.length})
+                                                </button>
+                                            </div>
+
+                                            <div className="space-y-8">
+                                                {currentTab === 'pending' && (
+                                                    group.pending.length > 0 ? (
+                                                        <div>
+                                                            <h3 className="text-lg font-black font-heading uppercase tracking-widest text-white border-l-4 border-brand-orange pl-3 mb-6">Aguardando <span className="text-brand-orange">Entrega</span></h3>
+                                                            <div className="space-y-6">
                                                     {group.pending.map((item, index) => {
                                                         const formData = item.production_form_data || {};
                                                         const buyerProfile = item.orders?.profiles || {};
@@ -952,14 +982,20 @@ export function AdminProductionPage() {
                                                     })}
                                                 </div>
                                             </div>
-                                        )}
+                                                    ) : (
+                                                        <div className="text-center text-gray-500 font-bold uppercase tracking-widest italic py-8">
+                                                            Nenhuma demanda aberta no momento.
+                                                        </div>
+                                                    )
+                                                )}
 
-                                        {group.delivered.length > 0 && (
-                                            <div className="pt-4">
-                                                <h3 className="text-lg font-black font-heading uppercase tracking-widest text-white border-l-4 border-green-500 pl-3 mb-6 flex items-center">
-                                                    Entregues <span className="text-green-500 ml-2">Recentes</span>
-                                                </h3>
-                                                <div className="space-y-4">
+                                                {currentTab === 'delivered' && (
+                                                    group.delivered.length > 0 ? (
+                                                        <div>
+                                                            <h3 className="text-lg font-black font-heading uppercase tracking-widest text-white border-l-4 border-green-500 pl-3 mb-6 flex items-center">
+                                                                Entregues <span className="text-green-500 ml-2">Recentes</span>
+                                                            </h3>
+                                                            <div className="space-y-4">
                                                     {group.delivered.map(item => {
                                                         const formData = item.production_form_data || {};
                                                         const isEditing = editingDelivered[item.id];
@@ -1123,9 +1159,16 @@ export function AdminProductionPage() {
                                                     })}
                                                 </div>
                                             </div>
-                                        )}
-                                    </div>
-                                )}
+                                                    ) : (
+                                                        <div className="text-center text-gray-500 font-bold uppercase tracking-widest italic py-8">
+                                                            Nenhuma demanda entregue no momento.
+                                                        </div>
+                                                    )
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         );
                     })}
